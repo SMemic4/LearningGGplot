@@ -17,6 +17,7 @@ library(lubridate)
 library(purrr)
 library(readxl)
 library(modelr)
+library(mgcv)
 
 ###############################################################################################################################################################################################
 # Chapter 2: Getting Started with ggplot2
@@ -207,11 +208,86 @@ ggplot(mpg, aes(x = displ, y = cty, color = class, size = drv)) + geom_point()  
 # 2.5 Faceting 
 ###############################################################################################################################################################################################
 # Another technique for displaying additional categorical variables on a plot is faceting. 
+# Faceting creates tables of graphics by splitting the data into subsets and displaying the same graph for each subset
+# There are two types of faceting: grid and wrapped
+# To facet a plot simply add a faceting specification with facet_wrap() which takes the name of a variable preceded by ~
 
+ggplot(mpg, aes(x = displ, hwy)) + geom_point() + facet_wrap(~class)
 
+###############################################################################################################################################################################################
+# 2.5.1 Exercises
+###############################################################################################################################################################################################
+# 1. What happens if you try to facet by a continuous variable like hwy? What about cyl? What’s the key difference?
 
+length(unique(mpg$hwy)) # There are 27 unique values for hwy
+ggplot(mpg, aes(displ, cty)) + geom_point() + facet_wrap(~hwy) # Facet wrap works for continuous values but creates 27 different graphs. Basically facet wrapping a continuous variable will facet value for every value making it unreliable for very large data sets 
 
+ggplot(mpg, aes(displ, cty)) + geom_point() + facet_wrap(~cyl) # Facet wrapping around the cyl variable creates four different graphs. This is because cyl only has four different unique values and is a lot easier to read compared to facet wrapping around hwy
 
+# 2. Use faceting to explore the three-way relationship between fuel economy, engine size, and number of cylinders. How does faceting by number of cylinders change your assessment of the relationship between engine size and fuel economy?
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + facet_wrap(~cyl)
+
+# There appears to be a relationship between engine size and the number of cylinders. The larger the engine the more the higher the probability of having more cylinders
+# Additional there is also a relationship between the engine size between and hwy fuel economy, with smaller engines having better fuel economy
+# We can see that cars that have smaller engines and less cylinders tend to have better fuel economy 
+
+# 3.  Read the documentation for facet wrap(). What arguments can you use to control how many rows and columns appear in the output?
+
+?facet_wrap()
+
+# nrow and ncol can be used to control how many rows and columns appear in the facet wrap
+
+# 4. What does the scales argument to facet wrap() do? When might you use it?
+
+?facet_wrap()
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + facet_wrap(~cyl)
+ggplot(mpg, aes(displ, hwy)) + geom_point() + facet_wrap(~cyl, scales = "free")
+
+# The scales argument is "fixed" by default, be can be adjusted to "free" which removes the default scale that all facet wraps have
+# When giving the argument "free" each facet wrap receives it's own scale that fits with the subset of the data
+# The scales argument can be useful when the different subsets of the data have a wide range of values allowing for better clarity 
+
+###############################################################################################################################################################################################
+# 2.6 Plot Geoms
+###############################################################################################################################################################################################
+# There are a multitude of different geoms:
+# Geom_smooth() fits a smoother to the data and displays the smooth and its standard error
+# Geom_boxplot() produces a box and whisker plot to summarise the distribution of a set of points
+# Geom_histogram() and geom_freqpoly() show the distribution of continuous variables
+# Geom_bar() shows the distribution of categorical variables
+# geom_path() and geom_line() draws lines between the data points. A line plot is constrained to produce lines that travel from left to right, while paths can go in any direction. Lines are typically used to explore how things change over time
+
+###############################################################################################################################################################################################
+# 2.6.1 Adding a Smoother to a Plot
+###############################################################################################################################################################################################
+# For scatter plots with a lot of noise it can be hard to determine the dominant pattern. It is useful to add a smoothed line to the plot with geom_smooth()
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + geom_smooth()
+
+# This line overlays the scatterplot with a smooth curve, including an assessment of uncertainty in the form of point-wise confidence intervals shown in grey. 
+# The confidence interval can be turned off with geom_smooth(se = FALSE)
+# Another important argument for geom_smooth() is the method, which chooses which type of model is used to fit the smooth curve
+# method = "loess", is the default fro a small n, it uses a smooth local regression. The wiggliness of the line is controlled by the span parameter, which ranges from 0 (excessive) to 1 (minimum)
+
+ggplot(mpg, aes(displ, hwy)) +  geom_point() + geom_smooth(span = 0.2) # The line is much more erratic with a low span
+ggplot(mpg, aes(displ, hwy)) +  geom_point() + geom_smooth(span = 1) # Smoother line with a larger span
+
+# Loess does not work well for large datasets, so an alternative smoothing algorithm is used when n is greater than 1000
+# method = "gam" fits a generalized additive model provided by the mgcv package. A formula like y ~ s(x) or y ~ s(x,bs = "cs") are used
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + geom_smooth(method = "gam", formula = y ~ s(x)) 
+
+# Method = "lm" fits a linear model, giving the line of best fit:
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + geom_smooth(method = "lm")
+
+# Method= "rlm" works with lm(), but uses a robust fitting algorithm so that outliers don't affect the fit as much. It is part of the MASS package
+
+###############################################################################################################################################################################################
+# 2.6.2 Boxplots and Jittered Points
+###############################################################################################################################################################################################
 
 
 
