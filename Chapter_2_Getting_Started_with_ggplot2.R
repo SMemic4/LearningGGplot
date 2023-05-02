@@ -182,7 +182,7 @@ vignette("ggplot2-specs")
 # An additional factor to consider is the amount of data. If there is a lot of data it can be hard to distinguish different groups. An alternative solution is faceting 
 # When using aesthetics in a plot, less is usually more. it's difficult to see simultaneous relationships among color and shape and size
 # The key is trying to make a complex plot that shows everything at once and to see if a series of simple plots can tell a story, leading the reader from ignorance to knowledge
- 
+
 ###############################################################################################################################################################################################
 # 2.4.1 Exercises
 ###############################################################################################################################################################################################
@@ -288,7 +288,45 @@ ggplot(mpg, aes(displ, hwy)) + geom_point() + geom_smooth(method = "lm")
 ###############################################################################################################################################################################################
 # 2.6.2 Boxplots and Jittered Points
 ###############################################################################################################################################################################################
+# When a set of data contains a cateogorical variable and one ore more continuous variables, it is most likely there will be interest in knowing how the values of the continuous variables vary with the levels of the categorical variables
 
+ggplot(mpg, aes(drv, hwy)) + geom_point()
 
+# The data above has few unique values of both class and hwy leading to a lot of overlap on the plot, due to many points being plotted in the same location, making it harder to udnerstand the distrubtion
+# There are three useful techniques to help alleviate the problem:
+# 1. Jittering, geom_jitter(), adds a little random noise to the data which cna help avoid overplotting
+
+ggplot(mpg, aes(drv, hwy)) + geom_jitter()
+
+# 2. Boxplots, geom_boxplots, summarise the shape of the distribution with a handful of summary statistics
+
+ggplot(mpg, aes(drv, hwy)) + geom_boxplot()
+
+# 3. Violin plots, geom_violin(), show a compact representation of the "density" of the distribution. highlighting the areas where more points are found 
+
+ggplot(mpg, aes(drv, hwy)) + geom_violin()
+
+# Each of the methods has its strengths and weaknesses. 
+# Boxplot summarise the bulk of the distribution with only five numbers
+# Jittered plots show every point but only work with relatively small datasets
+# Violoin plots give the richest display, but rely on the calculation of a density estimate, which can be hard to interpret
+
+# For jittered points, geom_jitter() offers the same control over aesthetics as geom_point(): size, color, and shape
+# For geom_boxplot() and geom_violin() the outline color and internetal color fill can be chosen
+
+###############################################################################################################################################################################################
+# 2.6.3 Histograms and Frequency Polygons
+###############################################################################################################################################################################################
+# Histograms and Frequency Polygons show the distribution of a single numeric variable. They provide more information about the distribution of a single group than boxplots, at the expense of needing more space
+
+ggplot(mpg, aes(hwy)) + geom_histogram()
+
+ggplot(mpg, aes(hwy)) + geom_freqpoly()
+
+# Both histograms and frequency polygons work in the same way: they bin the data, and count the number of observations in each bin. The only difference between the two is the display. Histrograms use bars while frequency plots use lines
+# The width of the bins can be controlled with the binwidth argument (to avoid evenly spaced bins use the breaks argument)
+# It is important to experiment with the bin width. The default just splits the data into 30 bins, which is unlikely to be the best option of representations
+
+ggplot()
 
 
