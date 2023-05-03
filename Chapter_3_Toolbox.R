@@ -115,5 +115,21 @@ ggplot(mpg, aes(displ, hwy)) + geom_point() + geom_smooth(span = 0.3)
 ###############################################################################################################################################################################################
 # 3.3. Labels
 ###############################################################################################################################################################################################
+# The main tool for adding text to ggplot is geom_text(), which adds labels at the specified x and y positions
+# geom_text() has the most aesthetics of any geom, because there are so many ways to control the appearance of a text:
 
+# family gives the name of a font. There are only hree fonts that are guaranteed to work everywhere: "sans" (the default), "serif", or "mono"
+
+df <- data.frame(x = 1, y = 3:1, family = c("sans", "serif", "mono"))
+ggplot(df, aes(x, y)) + geom_text(aes(label = family, family = family))
+
+# It's much harder to include a system font on a plot because text drawing is done differently by each graphics device
+# So to have a font that works everywhere it is neccassary to configure five devices in five different ways. Two packages simplify this process "showtext" and "extrafonts"
+
+# The fontface argument specifies the face of text: "plain" (the default), "bold", or "italic"
+
+df <- data.frame(x = 1, y = 3:1, face = c("plain", "bold", "italic"))
+ggplot(df, aes(x, y)) + geom_text(aes(label = face, fontface = face))
+
+# The alignment of the text can be adjusted with hjust ("left", "center", "right", "inward", "outward") and vjust("bottom", "middle", "top", "inward", "outward")
 
