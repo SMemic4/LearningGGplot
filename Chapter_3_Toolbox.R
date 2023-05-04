@@ -268,3 +268,173 @@ ggplot(Oxboys, aes(age, height, group = Subject)) + geom_point() + geom_line()
 
 ggplot(Oxboys, aes(age, height)) + geom_point() + geom_line() # Not the intended graph that should be displayed
 
+# IF a group isn't defined by a single variable, but instead by a combination of multiple variables, use interaction() to combine them, aes(group = interaction(school_id, student_id))
+
+###############################################################################################################################################################################################
+# 3.5.2 Different Groups on Different Layers
+###############################################################################################################################################################################################
+# There are times it is necessary to plot summaries that use different levels of aggregation: one layer might display individuals while another displays an overall summary
+
+ggplot(Oxboys, aes(age, height, group = Subject)) + geom_line() + geom_smooth(method = "lm", se = FALSE)
+
+# This display is displaying the summary in an unintended matter. A smoothed line was added for each boy. Grouping controls both the display and the operation of the stats. One statistical transformation is run for each group
+# To counteract this effect, instead of applying the grouping aesthetic in ggplot(), where it will apply to all layers, set it in geom_line() so it applies only to the lines
+# There are no discrete variables in the plot so the default grouping variable will be a constant and will display one smooth line
+
+ggplot(Oxboys, aes(age, height)) + geom_line(aes(group = Subject)) + geom_smooth(method = "lm", linewidth = 2, se = FALSE)
+
+###############################################################################################################################################################################################
+# 3.5.3 Overriding the Default Grouping
+###############################################################################################################################################################################################
+# Some plots have a discrete x scale, but it can still be useful to draw lines connecting across groups. This is useful for interaction plots, profile plots, and parallel coordinate plots, among others
+
+ggplot(Oxboys, aes(Occasion, height)) + geom_boxplot()
+
+# Within this plot is one discrete variable, Occasion, so a boxplot is create for each unique x value. 
+# To overlay lines that connect each individual boy,simply adding geom_line() does not work; the lines are drawn within each occasion not across each subject:
+
+ggplot(Oxboys, aes(Occasion, height)) + geom_boxplot() + geom_line(color = "red", alpha = 0.5)
+
+# To create the intended plot, override the grouping to specific that each line is dedicated to each boy
+
+ggplot(Oxboys, aes(Occasion, height)) + geom_boxplot() + geom_line(aes(group = Subject), color = "maroon")
+
+###############################################################################################################################################################################################
+# 3.5.4 Matching Aesthetics to Graphic Objects
+###############################################################################################################################################################################################
+# The last issue with collective geoms is how the aesthetics of the individual observations are mapped to the aesthetics of of the complete entity
+# Lines and paths operate on an off-by-one principle: there is one more observation than line segment, and so the aesthetic for the first observation is used for the first segment, second observation for the second segment and so on. This means that the aesthetic for the last observation is not used:
+
+df <- data.frame(x = 1:3, y = 1:3, color = c(1,3,5))
+
+ggplot(df, aes(x, y, color = factor(color))) + geom_line(aes(group = 1), size = 2) + geom_point(size = 5)
+ggplot(df, aes(x, y, color = color)) + geom_line(aes(group = 1), size = 2) + geom_point(size = 5)
+
+# It's possible to imagine a more complicated system where segments smoothly blend from one aesthetic to another
+# This is possible for continuous variables like size or color, but not for discrete variables, and is not used in ggplot2
+# However, this behavior can be captured by performing linear interpolation:
+
+xgrid <- with(df, seq(min(x), max(x), length = 50))
+interp <- data.frame(x = xgrid, y = approx(df$x, df$y, xout = xgrid)$y, color = approx(df$x, df$color, xout = xgrid)$y)
+ggplot(interp, aes(x, y, color = color)) + geom_line(size = 2) + geom_point(data = df, size = 5)
+
+# An additional limitation for paths and lines is that line type must be constant over each individual line. In R there is no way to draw a line which had varying line type
+# For all other collective geoms like polygons, the aesthetics from the individual components are only used if the are all the same, otherwise the default value is used
+# These issues are most relevant when mapping aesthetics to continuous variables, because, as described above, when you introduce a mapping to a discrete variable, it will by default split apart collective geoms into smaller pieces
+# This works particularly well for bar and area plots, because stacking the individual pieces produces the same shape as the original ungrouped data
+
+ggplot(mpg, aes(class)) + geom_bar()
+ggplot(mpg, aes(class, fill = drv)) + geom_bar()
+
+# Trying to map fill a continuous variable in the same way doesn't work. The default grouping will only be based on class, so each bar will be given multiple colors
+# Since a bar can only display one color, it will use the default grey. To show multiple colors, we need multiple bars for each class, which we can get by overriding the groupings
+
+ggplot(mpg, aes(class, fill = hwy)) + geom_bar()
+ggplot(mpg, aes(class, fill = hwy , group = hwy)) + geom_bar()
+
+# The bars will be stacked in the order defined by the grouping variable. if you need fine control, you'll need to create a factor with levels ordered as needed
+
+###############################################################################################################################################################################################
+# 3.5.5 Exercises
+###############################################################################################################################################################################################
+# 1. Draw a boxplot of hwy for each value of cyl, without turning cyl into a factor. What extra aesthetic do you need to set?
+
+ggplot(mpg, aes(cyl, hwy, group = cyl, fill = cyl)) + geom_boxplot()
+
+# The aesthetic "group = cyl" is needed 
+
+# 2. Modify the following plot so that you get one boxplot per integer value of dispel
+
+ggplot(mpg, aes(displ, cty)) + geom_boxplot() # Before
+ggplot(mpg, aes(displ, cty)) + geom_boxplot(aes(group = displ)) # After. One boxplot for each value of displ
+
+# 3. When illustrating the difference between mapping continuous and discrete colors to a line, the discrete example needed aes(group = 1). Why? What happens if that is omitted? What’s the difference between aes(group = 1) and aes(group = 2)? Why?
+
+ggplot(df, aes(x, y, color = factor(color))) + geom_line(aes(group = 1), size = 2) + geom_point(size = 5)
+ggplot(df, aes(x, y, color = factor(color))) + geom_line(size = 2) + geom_point(size = 5)
+ggplot(df, aes(x, y, color = factor(color))) + geom_line(aes(group = 2), size = 2) + geom_point(size = 5)
+
+# It is important to specify grouping for the line aesthetic otherwise the color wont be applied and the line wont be drawn for discrete variables. If it is omitted then no line will be drawn between the points. However even if group = 2 is used in place the line will be drawn since a grouping is specified
+
+# 4. How many bars are in each of the following plots?
+
+ggplot(mpg, aes(drv)) + geom_bar() # There bars. One for each of the drv
+ggplot(mpg, aes(drv, fill = hwy, group = hwy)) + geom_bar() # Three bars. Because the grouping is a discrete variable 
+
+mpg2 <- mpg %>% arrange(hwy) %>% mutate(id = seq_along(hwy))
+ggplot(mpg2, aes(drv, fill = hwy, group = id)) + geom_bar() # Still three bars. Not possible to group a discrete variable and continuous variable
+ggplot(mpg2, aes(drv, fill = hwy, group = id, color = "white")) + geom_bar() # There are three bars, but each bar is composed of several smaller bars laid horizontally
+
+# 5. Install the babynames package. It contains data about the popularity of babynames in the US. Run the following code and fix the resulting graph. Why does this graph make me unhappy?
+
+library(babynames)
+
+hadley <- babynames %>% filter(name == "Hadley")
+ggplot(hadley, aes(year, n)) + geom_line() # The issue with the graph is that it a saw tooth graph because there are two different groups of babies with the name hadley. Male and females. This can be fixed by grouping them together
+ggplot(hadley, aes(year, n, group = sex, color = sex)) + geom_line() + geom_point() # Better representation of the data and graph is much easier to read
+
+###############################################################################################################################################################################################
+# 3.6 Surface Plots
+###############################################################################################################################################################################################
+# ggplot2 does not support true 3d surfaces, However, it does support many common tools for representing 3d surfaces in 2d: contours, colored tiles, and bubble plots
+# These all work similarly, differing only in the aesthetic used for the third dimension
+
+ggplot(faithfuld, aes(eruptions, waiting)) + geom_contour(aes(z = density, color = after_stat(level)))
+ggplot(faithfuld, aes(eruptions, waiting)) + geom_raster(aes(fill = density))
+
+# Bubble plots work better with fewer observations
+
+small <- faithfuld[seq(1, nrow(faithfuld), by = 10),]
+ggplot(small, aes(eruptions, waiting)) + geom_point(aes(size = density), alpha = 1/3) + scale_size_area()
+
+# To work with true 3d plots, including true 3d surfaces use the "RGL" package 
+
+###############################################################################################################################################################################################
+# 3.7 Drawing Maps
+###############################################################################################################################################################################################
+# There are four types of map data that may be useful to visualize:
+# Vector boundaries
+# Point metadata
+# Area metadata
+# Raster images
+
+# The hardest challenge with drawing maps is assembling the datasets
+# ggplot2 lacks any useful features with that part of the analysis, but they are other packages that may help
+
+###############################################################################################################################################################################################
+# 3.7.1 Vector Boundaries
+###############################################################################################################################################################################################
+# Vector boundaries are defined by a data frame with one row for each corner of a geographical region like a country, state, or county. It requires four variables:
+# lat and long, giving the location of a point
+# group, a unique identifier for each contiguous region
+# id, the name of the region
+# Separate group and id variables are necessary because sometimes a geographical unit isn't a contiguous polygon. For example, Hawaii is composed of multiple islands that can't be drawn using a single polygon
+# The following code extracts data from the built in maps package. However, this package isn't particularly accurate or up to date, but is fine to practice with
+
+mi_counties <- map_data("county", "michigan") %>% select(lon = long, lat, group, id = subregion)
+
+# A vector boundary data can be visualized with geom_polygon()
+
+ggplot(mi_counties, aes(lon, lat)) + geom_polygon(aes(group = group), fill = NA, color = "black") + coord_quickmap()
+
+# coord_quickmap() is a quick and dirty adjustment that ensures that the aspect ratio of the plot is set correctly
+# Other useful sources of vector boundary data are:
+# The USAboundaries package which contains state, county and zip code data for the US. As well as current boundaries, it also had state and county boundaries going back to the 1600's
+# The tigris package, which makes it easy to access the US census tigris shapefiles. it contains state, county, zip code, and census tract boundaries as well as many other useful datasets
+# The rnaturalearth package, which contains country borders, and borders for the top-level region within each country (states in US, regions in France)
+# The osmar package wraps up the openstreetmap API allowing access to a wide range of vector data including individual streets and buildings
+# Custom shape files (.shp) can be loaded into r with maptools::radShapeSpatial()
+
+library(USAboundaries)
+c18 <- us_boundaries(as.Date("1820-01-01"))
+c18df <- fortify(c18)
+head(c18df)
+
+ggplot(c18df, aes(long, lat)) + geom_polygon(aes(group = group), colour = "grey50", fill = NA) + coord_quickmap()
+
+###############################################################################################################################################################################################
+# 3.7.2 Point Metadata
+###############################################################################################################################################################################################
+
+
+
