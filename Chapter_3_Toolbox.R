@@ -435,6 +435,23 @@ ggplot(c18df, aes(long, lat)) + geom_polygon(aes(group = group), colour = "grey5
 ###############################################################################################################################################################################################
 # 3.7.2 Point Metadata
 ###############################################################################################################################################################################################
+# Point metadata connects locations (defined by lat and lon) with other variables
 
+mi_cities <- maps::us.cities %>% as_tibble() %>% filter(country.etc == "MI") %>% select(-country.etc, lon = long) %>% arrange(desc(pop))
+mi_cities
+
+# The data can be shown on a scatter plot but wont be terribly useful. However, point metadata can be combined with another layer to make it interpretable
+
+ggplot(mi_cities, aes(lon, lat)) + geom_point(aes(size = pop)) + scale_size_area() + coord_quickmap()
+
+ggplot(mi_cities, aes(lon, lat)) + geom_polygon(aes(group = group), mi_counties, fill = NA, color = "grey50") +
+  geom_point(aes(size = pop), color = "red") + scale_size_area() + coord_quickmap()
+
+###############################################################################################################################################################################################
+# 3.7.3 Raster Images
+###############################################################################################################################################################################################
+# Instead of displaying context with vector boundaries, it may be useful to draw a traditional map underneath. This is called a raster image
+# The easiest way to obtain a raster map of a given area is to use the ggmap package, which allows downloading of data from a variety of online mapping sources including OPenStreetMap and Google Maps
+# Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file
 
 
