@@ -23,6 +23,8 @@ library(ggthemes)
 library(mgcv)
 library(directlabels)
 library(nlme)
+library(rmarkdown)
+library(ggmap)
 
 ###############################################################################################################################################################################################
 # Chapter 3: Toolbox
@@ -453,5 +455,122 @@ ggplot(mi_cities, aes(lon, lat)) + geom_polygon(aes(group = group), mi_counties,
 # Instead of displaying context with vector boundaries, it may be useful to draw a traditional map underneath. This is called a raster image
 # The easiest way to obtain a raster map of a given area is to use the ggmap package, which allows downloading of data from a variety of online mapping sources including OPenStreetMap and Google Maps
 # Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file
+
+if (file.exists("mi_raster.rds")) {
+  mi_raster <- readRDS("mi_raster.rds")
+} else {
+  bbox <- c(
+    min(mi_counties$lon), min(mi_counties$lat),
+    max(mi_counties$lon), max(mi_counties$lat)
+  )
+  mi_raster <- ggmap::get_openstreetmap(bbox, scale = 8735660)
+  saveRDS(mi_raster, "mi_raster.rds")
+}
+
+ggmap::ggmap(mi_raster) +
+  geom_point(aes(size = pop), mi_cities, colour = "red") +
+  scale_size_area()
+
+df <- as.data.frame(raster::rasterToPoints(x))
+names(df) <- c("lon", "lat", "x")
+ggplot(df, aes(lon, lat)) + geom_raster(aes(fill = x))
+
+###############################################################################################################################################################################################
+# 3.7.4 Area Metadata
+###############################################################################################################################################################################################
+# Sometimes the metadata is associated not with a point, but an area. For example, creating mi_census provides census information about each country in MI
+
+mi_census <- midwest %>% tibble() %>% filter(state == "MI") %>% mutate(county = tolower(county)) %>% select(county, area, poptotal, percwhite, percblack)
+mi_census
+
+# However, this data cannot be directly map due to it lacking a spatial component. To fix this, first join the data to the vector boundaries data
+
+census_counties <- left_join(mi_census, mi_counties, by = c("county" = "id"))
+
+ggplot(census_counties, aes(lon, lat, group = county)) + geom_polygon(aes(fill = poptotal)) + coord_quickmap()
+
+ggplot(census_counties, aes(lon, lat, group = county)) + geom_polygon(aes(fill = percwhite)) + coord_quickmap()
+
+###############################################################################################################################################################################################
+# 3.8 Revealing Uncertainty
+###############################################################################################################################################################################################
+# Information about the uncertainty in the data is useful to present on plot
+# There are four basic families of geoms that can be used depending on whether the x values are discrete, or continuous, and whether or not they display the middle of the interval or just the extent:
+# 1. Discrete x, range: geom_errorbar(), geom_linerange()
+# 2. Discrete x, range and center: geom_crossbar(), geom.pointrange()
+# 3. Continuous x, range: geom_ribbon()
+# 4. Continuous x, range and center: geom_smooth(stat = "identity")
+# These geoms assume that there is interest in the distribution of y conditionals on x and there is use of aesthetics ymin and ymax to determine the range of y values
+
+y <- c(18, 11, 16)
+df <- data.frame(x = 1:3, y = y, se = c(1.2, 0.5, 1.0))
+
+base <- ggplot(df, aes(x, y, ymin = y - se, ymax = y + se)) # Whenever working with standard error or error bars in is necessary to have the standard error already calculated before attempting to plot onto a graph
+base + geom_crossbar() # Creates a rectangular prism with a line in the middle of the rectangle. The line indicates the value of the x while the top and bottom edges of the square indicate standard error
+base + geom_pointrange() # Similar to the previous graph, but each value is represented by a singular point and has lines extending from the top and bottom to represent standard error
+base + geom_smooth(stat = "identity") # Creates a line graph connecting the points from left to right, and has a shadow extending outwards from the line to show standard error
+base + geom_errorbar() # Creates a standard error bar with one vertical line in between two horizontal lines
+base + geom_linerange() # Creates a single vertical line that extends from the lower standard error to the upper standard error
+base + geom_ribbon() # Creates a line similar to geom_smooth() but the difference is the shadow and line are completely filled in 
+
+# There are many different ways to calculate standard errors, thus choice is up to the creator
+
+###############################################################################################################################################################################################
+# 3.9 Weighted Data
+###############################################################################################################################################################################################
+# When a dataset contains aggregated data in which each row in the dataset represents multiple observations, it is important to take into account the weighting variable
+# The choice of a weighting variable profoundly affect what is seen in the plot and the conclusions that will be drawn from it
+# There are two aesthetic attributes that can be used to adjust for weights: Firstly, for simple geoms like lines and points, the size aesthetic
+
+ggplot(midwest, aes(percwhite, percbelowpoverty)) + geom_point() # This plot shows the unweighted data
+
+ggplot(midwest, aes(percwhite, percbelowpoverty)) + geom_point(aes(size = poptotal / 1e6)) + scale_size_area("Population\n(millions)", breaks = c(0.5, 1, 2, 4)) # This plot shows the weighted population totals and how they correlate with poverty rates within the white community 
+
+# For more complicated transformations which involve statistical transformations, specify weight with the weight aesthetic
+# The weights will be passed on to the statistical summary function. Weights are supported for every case which makes sense, smoothers, quantile regressions, boxplots, histograms, and density plots
+# The weighting variable will not be able to be seen directly, but will change the results of the statistical summary
+# The following code shows how weighting by population density affects the relationship between percent white and percent below the poverty line
+
+ggplot(midwest, aes(percwhite, percbelowpoverty)) + geom_point() + geom_smooth(method = lm, size = 1) # The unweighted relationship
+
+ggplot(midwest, aes(percwhite, percbelowpoverty)) + geom_point(aes(size = poptotal / 1e6)) + geom_smooth(aes(weight = poptotal), method = lm, size = 1) + scale_size_area(guide = "none")
+
+# When weighing a histogram or density plot by total population, the distribution is changed from the number of counties to the distribution of the number of people
+
+ggplot(midwest, aes(percbelowpoverty)) + geom_histogram(binwidth = 1) + ylab("Counties") # Unweighted graph showing the number of counties at their various poverty levels
+
+ggplot(midwest, aes(percbelowpoverty)) + geom_histogram(aes(weight = poptotal), binwidth = 1, ) + ylab("Population (1000s)") # There appears to be a trend with poverty levels increasing with population growth 
+
+###############################################################################################################################################################################################
+# 3.10 Diamonds Data
+###############################################################################################################################################################################################
+# To demonstrate tools for large datasets, the diamonds dataset will be used. It consists of price and quality information for ~54,000 diamonds
+
+diamonds
+
+# The data contains the four characteristics of diamond quality: carat, cut, color, and clarity
+# The data also contains five physical measurements: depth, table, x, y, and z
+# The dataset is not well cleaned, so in addition to demonstrating interesting facts about diamonds, it also shows some data quality issues
+
+###############################################################################################################################################################################################
+# 3.11 Displaying Distributions
+###############################################################################################################################################################################################
+# There are a multitude of geoms that can be used to display distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether the interest is in the conditional or joint distribution 
+# For one dimensional distributions the most important geom is the histogram, geom_histogram()
+
+ggplot(diamonds, aes(depth)) + geom_histogram() # The histogram shows that all diamonds fall between a depth of 55 and ~70. With the largest distribution of diamonds falling in between 60 to 65 depth. The data appears to be symmetric 
+# The symmetrical distribution is supported by the fact that mean and median are very close to one another (Mean: 61.75, Median: 61.80)
+# However, the binwidth is too large and can be further refined by picking a bin value
+
+ggplot(diamonds, aes(depth)) + geom_histogram(binwidth = 0.1) + xlim(55, 70) # This graphs shows a a clear symmetrical distribution of diamond depth 
+
+# It is important to experiment with binning to reveal new patterns within the data. 
+# It is possible to change the binwidth, specify the number of bins, or even specify the exact locations of breaks
+# Never rely on default parameters to get a revealing view of the distribution. Zooming on the x axis and selecting a smaller binwidth reveals far greater level of detail
+# When publishing figures it is important to include information about important parameters (such as binwidth) in the caption 
+
+# To compare the distribution between groups there are a few options:
+# Showing small multiple of the histogram, facet_wrap(~ var)
+# Use color and a frequency polygon, geom_freqpoly() 
 
 
