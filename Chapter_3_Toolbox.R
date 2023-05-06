@@ -572,5 +572,58 @@ ggplot(diamonds, aes(depth)) + geom_histogram(binwidth = 0.1) + xlim(55, 70) # T
 # To compare the distribution between groups there are a few options:
 # Showing small multiple of the histogram, facet_wrap(~ var)
 # Use color and a frequency polygon, geom_freqpoly() 
+# Use a "conditional density plot" geom_histogram(position = "fill")
+
+ggplot(diamonds, aes(depth)) + geom_histogram(binwidth = 0.1) + facet_wrap(~cut) # Facet wrapped histogram. Facet wrapped around the variable cut
+
+ggplot(diamonds, aes(depth)) + geom_freqpoly(aes(color = cut), binwidth = 0.1, na.rm = TRUE) + xlim(58,68) # Frequency polygon divided into groups by "color"
+
+ggplot(diamonds, aes(depth)) + geom_histogram(aes(fill = cut), binwidth = 0.1, position =  "fill", na.rm = TRUE) + xlim(58,68) # Conditional density plot
+
+# The conditional density plot uses position_fill() to stack each bin, scaling it to the same height
+# The plot is perceptually challenging to read, because one must compare bar heights, not positions, but it displays the strongest patterns in the graph
+
+# Both the histogram and frequency polygon geom use the same underlying statistical transformation (stat = "bin")
+# This statistic produces two output variables: count and density
+# By default, count is mapped to y-position, due to it being more interpretable. 
+# The density is the count divided by the total count multiplied by the bin width. it is useful when you want to compare the shape of the distribution, not the overall size
+
+# An alternative to a bin-based visualization is a density estimate
+# Geom_density() places a little normal distribution at each data point and sums up all the curves. It has desirable theoretical properties, but is more difficult to relate back to the data
+# Only use a density plot when the data is known to be smooth, continuous, and unbounded 
+
+
+ggplot(diamonds, aes(depth)) + geom_density(na.rm = TRUE) + xlim(58, 68) + theme(legend.position = "none") # Density plot for the general data. It appears smooth, continuous, and unbounded 
+
+ggplot(diamonds, aes(depth, fill = cut, color = cut)) + geom_density(alpha = 0.2, na.rm = TRUE) + xlim(58, 68) # Density plot of the depth of diamonds for each of the cut qualities 
+
+# Note that the area of each density estimate is standardized to one so information is lost about the relative size of each group 
+
+# The histogram, frequency polygon, and density plot all display a detailed view of the distribution.
+# However, sometimes it may be useful to compare many distributions and it's useful to have alternative options that sacrifice quality for quantity. Here are three options:
+
+# 1. goem_boxplot(): The box and whisker plot shows five summary statistics along with individual outliers. It displays far less information than a histogram but takes up much less space
+# A boxplot can be used with both continuous and discrete x values. For continuous x values, use the group aesthetic to define how the x variable is broken up into bins
+# A useful helper function to cut up the continuous x variable is cut_width()
+
+ggplot(diamonds, aes(clarity, depth)) + geom_boxplot() # A regular boxplot that shows the summary of the depth for different groups of diamonds based on clarity 
+
+ggplot(diamonds, aes(carat, depth)) + geom_boxplot(aes(group = cut_width(carat, 0.1))) + xlim(NA, 2.05) # This boxplot shows the statistical summary of the depth of diamonds based on carats. The carat length is divided into 0.1 groupings. Not all data is included since the x axis was limited
+
+# 2. geom_violin(): The violin plot is a compact version of the density plot. The underlying computation is the same but the results are displayed in a similar fashion to the boxplot 
+
+ggplot(diamonds, aes(clarity, depth)) + geom_violin() # A violin plot. Note that there are exactly 8 violins just like they were exactly 8 box plots on the previous graph 
+
+ggplot(diamonds, aes(carat, depth)) + geom_violin(aes(group = cut_width(carat, 0.1))) + xlim(NA, 2.05) # Violin plot of the the depth of carats based on a subset of carat values divided into 0.1 groups
+
+# 3. geom_dotplot(): Draws one point for each observation, carefully adjusted in space to avoid overlaps and shows the distribution it is useful for smaller datasets
+
+###############################################################################################################################################################################################
+# 3.11.1  Exercises
+###############################################################################################################################################################################################
+
+
+
+
 
 
