@@ -621,6 +621,42 @@ ggplot(diamonds, aes(carat, depth)) + geom_violin(aes(group = cut_width(carat, 0
 ###############################################################################################################################################################################################
 # 3.11.1  Exercises
 ###############################################################################################################################################################################################
+# 1. What binwidth tells you the most interesting story about the distribution of carat?
+
+ggplot(diamonds, aes(carat)) + geom_histogram() # It appears that large majority of carats fall under the 1.5 carats with a vast majority of diamonds being 0.5 carats
+ggplot(diamonds, aes(carat)) + geom_histogram(binwidth = .01) # A majority of diamonds usually fall under a specific carat number. There are several large peaks at approximately 0.25, 0.5, 0.75, and 1
+ggplot(diamonds, aes(carat)) + geom_histogram(binwidth = .1)
+
+# Comparing the plots above it is shown that diamonds are usually under 1 carat but under that group there are several large peaks of how many carats a diamonds is worth
+
+# 2. Draw a histogram of price. What interesting patterns do you see?
+
+ggplot(diamonds, aes(price)) + geom_histogram() # Based on the histogram the vast majority of diamonds are worth less than 5000 dollars
+ggplot(diamonds, aes(price)) + geom_histogram(binwidth = 100) # Similar conclusion to the graph above
+ggplot(diamonds, aes(price)) + geom_histogram(binwidth = 1000) # Similar conclusion
+ggplot(diamonds, aes(price)) + geom_histogram(binwidth = 5000) # Even stronger conclusion of the previous theory
+
+# 3. How does the distributions of price vary with clarity
+
+ggplot(diamonds, aes(price, group = clarity, color = clarity)) + geom_freqpoly() # A bit hard to read on the default graph
+ggplot(diamonds, aes(price, group = clarity, color = clarity)) + geom_freqpoly(binwidth = 1000, size = 1)
+ggplot(diamonds, aes(price, group = clarity, color = clarity)) + geom_freqpoly(binwidth = 2500, size = 1)
+ggplot(diamonds, aes(price, group = clarity, color = clarity)) + geom_freqpoly(binwidth = 5000, size = 1)
+
+# It appears that at lower prices there are a higher distribution of lower quality diamonds. At 5000+, lower clarity diamonds are still the largest group there but at much smaller proportion compared to at lower prices. Higher clarity diamonds are more rare at increasing prices
+
+# 4. Overlay a frequency polygon and density plot of depth. What computed variable do you need to map to y to make the two plots comparable? (You can either modify geom freqpoly() or geom density().)
+
+ggplot(diamonds, aes(depth, group = cut, fill = cut)) + geom_freqpoly(binwidth = 1) + geom_density(aes(group = cut))
+ggplot(diamonds, aes(depth)) + geom_density()
+ggplot(diamonds, aes(depth)) + geom_freqpoly()
+
+###############################################################################################################################################################################################
+# 3.12  Dealing with Overplotting
+###############################################################################################################################################################################################
+# The scatterplot is a very important tool for assessing the relationship between two continuous variables
+# However, when the data is large, point will be often plotted on top of each other obscuring the true relationship
+
 
 
 
