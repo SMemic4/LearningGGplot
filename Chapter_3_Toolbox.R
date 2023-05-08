@@ -656,6 +656,79 @@ ggplot(diamonds, aes(depth)) + geom_freqpoly()
 ###############################################################################################################################################################################################
 # The scatterplot is a very important tool for assessing the relationship between two continuous variables
 # However, when the data is large, point will be often plotted on top of each other obscuring the true relationship
+# In extreme cases, only the extent of the data will be displayed, and any conclusions drawn from the graphic will be suspect. This is the problem of overplotting
+# There are a number of ways to deal with it depending on the size of the data and the severity of the overplotting
+# The first set of techniques involves tweaking aesthetic properties:
+# Very small amounts of overplotting can sometimes be alleviated by making points smaller or using hollow glpyhs
+
+df <- data.frame(x = rnorm(2000), y = rnorm(2000))
+norm <- ggplot(df, aes(x, y)) + xlab(NULL) + ylab(NULL)
+norm + geom_point() # Regular scatter point graph
+norm + geom_point(shape = 1) # Scatterplot graph where the points are replaced with hollow circles
+norm + geom_point(shape = ".") # Scatterplot graph where the points are replaced with a period 
+norm + geom_point(shape = "X") # Scatterplot graph where the points are replaced with an X
+
+# For larger datasets with more overplotting, use alpha blending (transparency) to make the points transparent. 
+# Specifying alpha as a ratio, the denominator gives the number of points that must be over plotted to give a solid color. Values smaller than ~1/500 are rounded down to zero, giving completely transparent points
+
+norm + geom_point(alpha = 1/3)
+norm + geom_point(alpha = 1/5)
+norm + geom_point(alpha = 1/10)
+
+# If there is some discreteness in the data, using geom_jitter() will randomly jitter the points to alleviate some overlaps with geom_jitter()
+# This is particularly useful in conjunction with transparency. By default, the amount of jitter added is 40% of the resolution of the data, which leaves a small gap between adjacent regions. This can be changed with the default width and height arguments 
+
+norm + geom_jitter()
+
+# Alternatively overplotting can be thought of as a 2d density estimation problem, which gives rise to two more approaches:
+# Bin the points and count the number in each bin, then visualize that count with geom_bin2d(). Breaking the plot into many small squares can produce distracting visual artifacts 
+# It is recommended to use hexagons instead using geom_hex() in the hexbin package
+
+norm + geom_bin2d() 
+norm + geom_bin2d(bins = 10) 
+norm + geom_hex()
+norm + geom_hex(bins = 10)
+
+# Estimate the 2d density with stat_density2d(), and then display using one of the techniques for showing 3d surfaces
+# Another approach to dealing with overplotting is to add data summaries to help guide the true shape of the pattern within the data
+# For example, adding a smooth line showing the center of the data with geom_smooth() or using a statistical summary 
+
+###############################################################################################################################################################################################
+# 3.13  Statistical Summaries
+###############################################################################################################################################################################################
+# geom_histogram() and geom_bin2d use a familiar geom, geom_bar() and geom_raster(), combined with a new statistical transformation, stat_bin() and stat_bin2d(). stat_bin() and stat_bin2d() combine the data into bins and count the number of observations in each bin
+# Use stat_summary_bin() and stat_summary_2d() to compute different statistical summaries and override the default geoms
+
+ggplot(diamonds, aes(color)) + geom_bar() # Default bar graph that counts the number of observations for each color
+ggplot(diamonds, aes(color, price)) + geom_bar(stat = "summary_bin", fun = "mean") # Bar graph that shows the average price for each color of diamond
+
+ggplot(diamonds, aes(table, depth)) + geom_bin2d(binwidth = 1, na.rm = TRUE) + xlim(50,70) + ylim(50,70)
+ggplot(diamonds, aes(table, depth, z = price)) + geom_raster(binwidth = 1, stat = "summary_2d", fun = mean,  na.rm = TRUE) + xlim(50,70) + ylim(50,70)
+
+# stat_summary_bin() can control the size of the bins and the summary functions. It can produce y, ymin and y max aesthetics also making it useful for displaying measures of spread
+# The summary functions are quite constrained but are often useful for a quick first pass at a problem. For less restraining in summaries, the data will have to be summarized beforehand
+
+###############################################################################################################################################################################################
+# 3.14 Add-on Packages
+###############################################################################################################################################################################################
+
+# "animInt" allows for the creation of interactive ggplot2 graphics, adding querying, filtering and linking
+# "GGally" provides a very flexible scatterplot matrix, amongst other tools
+# "ggbio" provides a number of specialized geoms for genomic data
+# "ggdendro" turns data from tree methods in to data frames that can easily be displayed with ggplot2
+# "ggfortify" provides fortify and autoplot methods to handle objects from some popular R packages
+# "ggenealogy" helps explore and visualize genealogy data
+# "ggmcmc" provides a set of flexible tools for visualizing the samples generated by MCMC methods
+# "ggparallel"easily draws parallel coordinates plots, and the closely related hammock and common angle plots
+# "ggtern" allows for the use of ggplot2 to draw ternary diagrams
+# "ggtree" provides tools to view and annotate phylogenetic tree with different types of meta-data
+# "granovaGG" provides tools to visualize ANOVA results
+# "plotluck" automatically creates plots for one, two, or three variables
+
+###############################################################################################################################################################################################
+# End of Chapter 3
+###############################################################################################################################################################################################
+
 
 
 
