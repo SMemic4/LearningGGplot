@@ -160,24 +160,27 @@ ggplot(mpg, aes(displ, hwy)) + geom_point() + geom_smooth() + facet_wrap(~year)
 # 5. A position adjustment
 
 ###############################################################################################################################################################################################
-# 4.4.2  Scales
-###############################################################################################################################################################################################
-# A **scale** control the mapping from data to aesthetic attributes, and a scale is needed for every aesthetic used on a plot.
-# Each scale operates across all the data in the plot, ensuring a consistent mapping from data to aesthetics.
-# A scale is a function and its inverse, along with a set of parameters. 
-# For example, the color gradient scale maps a segment of the real line path through a color space. The parameters of the function define whether the path is linear or curved, which color space to use, and the colors at the start and end
-# The inverse function is used to draw a guide, so values can be read from the graph. Most mappings have a unique inverse (the mapping function is one-to-one), but many do not.
-# A unique inverse makes it possible to recover the original data, but this is not always desirable if the attention is directed on a single aspect
-
-###############################################################################################################################################################################################
 # 4.4.3 Coordinate System
 ###############################################################################################################################################################################################
 # A coordinate system, or **coord**, maps the position of objects onto the plane of the plot. 
 # Position is often specified by two coordinates (x,y) but potentially could be three or more (although this is not implemented in ggplot2).
 # The Cartesian coordinate system is the most common coordinate system for two dimensions, while polar coordinates and various map projections are used less frequently
-# 
 
+# Coordinate systems affect all position variables simultaneously and differ from scales in that they also change the appearance of the geometric objects
+# For example, in polar coordinates, bar geoms look like segments of a circle. 
+# Furthermore, scaling is performed before statistical transformation, while coordinate transformations occur afterward. 
 
+# Coordinate systems control how the axes and grid lines are drawn
+
+###############################################################################################################################################################################################
+# 4.4.4 Faceting
+###############################################################################################################################################################################################
+# Faceting is useful tool for the general framework of a graph. 
+# Faceting creates small multiples of a plot, with each graph showing a different subset of the whole dataset. 
+# This is a useful tool for investigating patterns across all conditions. 
+# The faceting specification describes which variables should be used to split up the data, and whether position scales should be free or constrained.
+
+###############################################################################################################################################################################################
 
 
 
