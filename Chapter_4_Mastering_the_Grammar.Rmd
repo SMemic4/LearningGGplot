@@ -1,6 +1,8 @@
 ---
 title: 'Chapter 4: Mastering the Grammar'
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "`r Sys.Date()`"
 ---
 
@@ -9,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(ggplot2)
 library(tidyverse)
 library(knitr)
+library(tinytex)
 ```
 
 ------------------------------------------------------------------------
@@ -61,7 +64,7 @@ ggplot(mpg, aes(displ, hwy, color = factor(cyl))) +
 
 ggplot can produce many plots that don't make sense, yet are grammatically valid. Points, line, and bars are all examples of geometric objects or **geoms**. Geoms determine the "type" of the plot. Plots that use a single geom are often given a special name:
 
-```{r cache = TRUE, echo=FALSE}
+```{r echo=FALSE, cache=TRUE}
 df <- tibble("Plot" = c("Scatterplot", "Bubblechart", "Barchart", "Box-and-whisker plot", "Line chart"),
               "Geom" = c("Point", "Point", "Bar", "Boxplot", "Line"),
               "Features" = c("-", "Size mapped to a variable", "-", "-", "-")) 
@@ -173,11 +176,11 @@ All together, the layered grammar defines a plot as the combination of:
 
 **Layers** are responsible for creating the objects that are perceived on the plot. A layer is composed of five parts:
 
-1.   Data
-2.   Aesthetic mappings
-3.   A statistical transformation (stat)
-4.   A geometric object (geom)
-5.   A position adjustment
+1.  Data
+2.  Aesthetic mappings
+3.  A statistical transformation (stat)
+4.  A geometric object (geom)
+5.  A position adjustment
 
 ------------------------------------------------------------------------
 
@@ -190,4 +193,17 @@ For example, the color gradient scale maps a segment of the real line path throu
 ------------------------------------------------------------------------
 
 ### 4.4.3 Coordinate System
-a
+
+A coordinate system, or **coord**. maps the position of objects onto the plane of the plot. Position is often specified by two coordinates (x,y) but potentially could be three or more (although this is not implemented in ggplot2). The Cartesian coordinate system is the most common coordinate system for two dimensions, while polar coordinates and various map projections are used less frequently.
+
+Coordinate systems affect all position variables simultaneously and differ from scales in that they also change the appearance of the geometric objects. For example, in polar coordinates, bar geoms look like segments of a circle. Furthermore, scaling is performed before statistical transformation, while coordinate transformations occur afterward.
+
+Coordinate systems control how the axes and grid lines are drawn
+
+------------------------------------------------------------------------
+
+### 4.4.4 Faceting
+
+Faceting is useful tool for the general framework of a graph. Faceting creates small multiples of a plot, with each graph showing a different subset of the whole dataset. This is a useful tool for investigating patterns across all conditions. The faceting specification describes which variables should be used to split up the data, and whether position scales should be free or constrained.
+
+------------------------------------------------------------------------
