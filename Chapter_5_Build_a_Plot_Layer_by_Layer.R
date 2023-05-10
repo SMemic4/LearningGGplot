@@ -97,5 +97,188 @@ ggplot(mpg, aes(x = displ, y = hwy, color = class))
 
 ggplot(mpg, aes(displ, hwy, color = class))
 
+# While data manipulation can occur in aes(), such as aes(log(carat)), log(price), it's best to only do simple calculations.
+# It's better to move complex transformations outside of the aes() and into explicit dplyr::mutate() call. This is easier to check the work and often faster in drawing the plot since the transformation is already done and not every time the plot is drawn.
+
+# Never refer to a variable with $ (diamonds$carat) in aes(). 
+# This breaks containment, so that the plot no longer contains everything it needs, and causes problem if ggplot changes the order of the rows, as it does during faceting.  
+
+###############################################################################################################################################################################################
+# 5.4.1 Specifying the Aesthetics in the Plot vs. in the Layers
+###############################################################################################################################################################################################
+# Aesthetic mappings can be supplied in the initial ggplot() call, in individual layers, or in some combination of both. All of these calls create the same plot specification
+
+ggplot(mpg, aes(displ, hwy, color = class)) + geom_point()
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(color = class))
+ggplot(mpg, aes(displ)) + geom_point(aes(y = hwy, color = class))
+ggplot(mpg) + geom_point(aes(displ, hwy, color = class))
+
+# Within each layer, mappings can be added, overrided, or removed
+
+tibble(Operation = c("Add", "Override", "Remove"), `Layer Aesthetics` = c("aes(color = cyl)", "aes(y = disp)", "aes(y = NULL)"), Result = c("aes(mpg, wt, color = cyl)", "aes(mpg, disp)", "aes(mpg)" ))
+
+# If there is only one layer in the plot, the way the aesthetics are specified won't make any difference. However, it does become important when multiple layers are added to the plot. 
+
+# The following plots are both valid and interesting, but focus on quite different aspects of the data
+ggplot(mpg, aes(displ, hwy, color = class)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + theme(legend.position = "none")
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(color = class)) + geom_smooth(method = "lm", se = FALSE) + theme(legend.position = "none")
+
+
+###############################################################################################################################################################################################
+# 5.4.2 Setting vs. Mapping
+###############################################################################################################################################################################################
+# Instead of mapping an aesthetic property to a variable, it can be set to a single value by specifying it within the layer parameters.
+# An aesthetic can be **mapped** to a variable (ex. aes(color = cut)) or **set** to a constant (ex. color = "red").
+# To set the appearance to be governed by a variable, put the specification inside aes(), to override the default size or color, put the value outside of aes()
+
+# The following plots are created with similar code, but have rather different outputs. 
+# The second plot **maps** (not sets) the color to the value "navy". This effectively creates a new variable only containing the value "navy" and then scales it with a color scale.
+# Since the value is discrete the default color scale uses evenly spaced color on the color wheel, and since there is only one value the color is pinkish
+
+ggplot(mpg, aes(cty, hwy)) + geom_point(color = "navy")  # Navy points on the plot
+ggplot(mpg, aes(cty, hwy)) + geom_point(aes(color = "navy")) # Creates a discrete variable called navy and then defaults to using the original color scale to give it a pink color on the plot
+
+# A third approach is to map the value, but override the default scale:
+
+ggplot(mpg, aes(cty, hwy)) + geom_point(aes(color = "darkblue")) + scale_color_identity()
+
+# This is useful if the dataset already contains a column that has colors.
+
+# It's sometimes useful to map aesthetics to constants. For example, to display multiple layers with varying parameters, each layer can be named:
+
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() +
+  geom_smooth(aes(color = "loess"), method = "loess", se = FALSE) +
+  geom_smooth(aes(color = "lm"), method = "lm", se = FALSE) +
+  labs(color = "Method")
+
+###############################################################################################################################################################################################
+# 5.4.3 Exercises
+###############################################################################################################################################################################################
+# 1. Simplify the following plot specifications: 
+
+# a. ggplot(mpg) + geom_point(aes(mpg$disp, mpg$hwy))
+
+ggplot(mpg) + geom_point(aes(displ, hwy))
+
+# b. ggplot() + geom_point(mapping = aes(y = hwy, x = cty), data = mpg) + geom_smooth(data = mpg, mapping = aes(cty, hwy))
+
+ggplot(mpg, aes(cty, hwy)) + geom_point() + geom_smooth()
+
+# c. ggplot(diamonds, aes(carat, price)) + geom_point(aes(log(brainwt), log(bodywt)), data = msleep)
+
+ggplot(aes(log(brainwt), log(bodywt)), data = msleep) + geom_point() # The previous plot used a dataset that wasn't even plotted and was unnecessary to the plot
+
+# 2. What does the following code do? Does it work? Does it make sense? Why/why not?
+
+ggplot(mpg) + geom_point(aes(class, cty)) + geom_boxplot(aes(trans, hwy))
+
+# The following code creates a plot that has both boxplot data based on hwy driving of the car and point data showing the city driving ability of various classes of the car
+# The data does work as it executes and graphs the points correctly
+# However, the graph doesn't make sense. First, the plot is scaled to classes and cty driving therefore anyone reading the plot without knowing the code will assume that the transmission types are a class of car.
+# Additionally, even though both cty and hwy share the same scale the plot conveys that the boxplots are showing cty driving efficiency even though it is using hwy values thus making the graph more confusing and inaccurate
+
+# 3. What happens if you try to use a continuous variable on the x axis in one layer, and a categorical variable in another layer? What happens if you do it in the opposite order?
+
+ggplot(mpg) + geom_point(aes(hwy, cyl)) + geom_point(aes(drv, cty)) 
+
+# Could cannot run because a discrete variable is being applied to a continuous scale
+
+ggplot(mpg) + geom_point(aes(drv, cty)) + geom_point(aes(hwy, cyl))
+
+# The plots are a mix of two different graphs together and it is formatted weirdly. 
+
+###############################################################################################################################################################################################
+# 5.5 Geoms
+###############################################################################################################################################################################################
+# Geometric objects or **geom** for short, perform the actual rendering of the layer, controlling the type of plot created
+
+#Types of geoms:
+  
+# Graphical primitives
+
+#   geom_blank() # Displays nothing. Most useful for adjusting axes limits using data
+#   geom_point() # Points
+#   geom_path() # Paths
+#   geom_ribbon() # Ribbons, a path with vertical thickness
+#   geom_segment() # A line segment, specified by start and end position
+#   geom_react() # Rectangles
+#   geom_polygon() # Filled polygons
+#   geom_text() # Text
+
+#   One variable:
+  
+  #   Discrete
+
+#   geom_bar() # Displays distribution of discrete variable
+
+#   Continuous
+
+#   geom_histogram() # Bin and count continuous variables, display with bars
+#   geom_density() # Smoothed density estimate
+#   geom_dotplot() # Stack individual points into a dot plot
+#   geom_freqpoly() # Bin and count continuous variable, display with lines
+
+#   Two variables:
+  
+  #   Both continuous:
+  
+  #   geom_point() # Scatterplot
+#   geom_quantile() # Smoothed quantile regression
+#   geom_rug() # Marginal rug plots
+#   geom_smooth() # Smoothed line of best fit
+#   geom_text() # Text labels
+
+#   Show distribution:
+  
+  #   geom_bin2d() # Bin into rectangles and count
+#   geom_density2d() # Smoothed 2d density estimate
+#   geom_hex() # Bin into hexagons and count
+
+#   At least one discrete:
+  
+  #   geom_count() # Count number of point at distinct locations
+#   geom_jitter() # Randomly jitter overlapping points
+
+#   One continuous, one discrete:
+  
+  #   geom_bar(stat = "identity") # A bar chart of precomputed summaries
+#   geom_boxplots() # Boxplots
+#   geom_violin() # Show density of values in each group
+
+#   Display uncertainty
+
+#   geom_crossbar() # Vertical bar with center
+#   geom_errorbar() # Error bars
+#   geom_linerange() # Vertical line
+#   geom_pointrange() # Vertical line with center
+
+#   Spatial
+
+#   geom_map() # Fast version of geom_polygon() for map data
+
+#   Three variables
+
+#   geom_contour() # Contours
+#   geom_tile() # Tile the plane with rectangles
+#   geom_raster() # Fast version of geom_tile() for equal sized tiles
+
+# Each geom has a set of aesthetics that it understands, so of which must be provided. For example point geoms require x and y position and understand color, size, and shape aesthetics. A bar requires height (ymax), and understands width, border color, and fill color.
+
+# Some geoms differ primarily in the way that they are parameterised. For example, a square can be drawn in three ways:
+# 1.  By giving geom_tile() the location (x and y) and dimensions (width and height)
+# 2.  By giving geom_rect() top (ymax), bottom (ymin), left (xmin) and right (xmax)
+# 3.  By giving geom_polygon() a four row data frame with the x and y positions of each corner
+
+# Other related geoms are:
+# geom_segment() and geom_line()
+# geom_area() and geom_ribbon()
+###############################################################################################################################################################################################
+# 5.5.1 Exercises
+###############################################################################################################################################################################################
+
+
+
 
 
