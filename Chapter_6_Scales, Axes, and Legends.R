@@ -1,0 +1,135 @@
+library(tidyverse)
+library(knitr)
+
+###############################################################################################################################################################################################
+# Chapter 6: Scales, Axes, and Legends
+###############################################################################################################################################################################################
+# 6.1 Introduction
+###############################################################################################################################################################################################
+# Scales control the mapping from data to aesthetics. They take data it turn it into something perceivable such as size, color, position, or shape.
+# Scales provide the tools that let a plot to be read: the axes and legends.
+# Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (range of the scale)
+# The axis or legends is the inverse function: it allows for the conversation of visual properties back into data
+
+###############################################################################################################################################################################################
+# 6.2 Modifying Scales
+###############################################################################################################################################################################################
+# A scale is required for every aesthetic used on the plot. When writing the following code:
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(color = class))
+
+# The full code looks like:
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(color = class)) + scale_y_continuous() + scale_x_continuous() + scale_color_discrete()
+
+# Default scales are named according to the aesthetic and the variable type: scale_y_continuous(), scale_color_discrete(), etc.
+
+# ggplot2 automatically adds default scales for every new aesthetic. But to override the defaults, the scale must be manually added
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(color = class)) + scale_x_continuous("The x axis") + scale_y_continuous("Y axis")
+
+# The use of "+" to "add" scales is misleading. When using "+" to a scale, it's not being added to the plot, but overriding the existing scale
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + scale_x_continuous("Label 1") + scale_x_continuous("Label 2") # In this case only the second label is applied to the graph
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(color = class)) + scale_x_continuous("Label 2") # Equivalent plot to the one above
+
+# A different scale can be used altogether
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(color = class)) + scale_x_sqrt() + scale_color_brewer()
+
+# The naming schemes for scales is straightforward. It is made up of 3 parts:
+# 1. scale
+# 2. The name of the aesthetic (color, shape, or x)
+# 3. The name of the scale(continuous, discrete, brewer)
+
+###############################################################################################################################################################################################
+# 6.2.1 Exercises
+###############################################################################################################################################################################################
+# 1. What happens if you pair a discrete variable to a continuous scale? What happens if you pair a continuous variable to a discrete scale?
+
+ggplot(mpg, aes(displ, hwy, color = class)) + geom_point() + scale_x_discrete() + scale_y_discrete() 
+
+# Scaling a continuous variable on a discrete scale results in the number on the graph being removed and replaced with the name of the variable. Otherwise the graph is similar to as before
+
+ggplot(mpg, aes(drv, hwy)) + geom_point() + scale_x_continuous() + scale_y_continuous()
+
+# Attempting to scale a discrete variable to a continuous scale will result in an error and the graph will not be produced
+
+# 2. Simplify the following plot specifications to make them easier to understand
+# a. 
+ggplot(mpg, aes(displ)) +
+  scale_y_continuous("Highway mpg") +
+  scale_x_continuous() +
+  geom_point(aes(y = hwy))
+
+# Simplified:
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + ylab("Highway mpg")
+
+# b. 
+
+ggplot(mpg, aes(y = displ, x = class)) +
+  scale_y_continuous("Displacement (l)") +
+  scale_x_discrete("Car type") +
+  scale_x_discrete("Type of car") +
+  scale_colour_discrete() +
+  geom_point(aes(colour = drv)) +
+  scale_colour_discrete("Drive\ntrain")
+
+# Simplified:
+
+ggplot(mpg, aes(class, displ, color = drv)) +
+  geom_point() +
+  xlab("Type of car") +
+  ylab("Displacement (l)") +
+  scale_color_discrete("Drive\ntrain")
+
+###############################################################################################################################################################################################
+# 6.3 Guides: Legends and Axes
+###############################################################################################################################################################################################
+# The most likely component of a scale that is going to modified is **guide**, the axis or legend associated with the scale
+# Guides allow for observations to be read from the plot and mapped back to their original values/
+# ggplot guides are produced automatically based on the layers of the plot. 
+# In ggplot2, the legend isn't directly controlled, instead the data is set up so there's a clear mapping between data and aesthetics that allow for the legend to be generated automatically
+
+# Axis and legends are the same type of thing but while they look very different there are many natural correspondences between the two:
+tibble(Axis = c("Label", "Tick and grid line", "Tick label"), Legend = c("Title", "Key", "Key label"), `Argument name` = c("name", "break", "labels"))
+
+###############################################################################################################################################################################################
+# 6.3.1 Scale Title
+###############################################################################################################################################################################################
+# The first argument to the scale function, *name*, is the axes/legend title. It can be supplied text strings (using \n for line breaks) or mathematical expressions in quote (as described in ?plotmath)
+
+df <- data.frame(x = 1:2, y = 1, z = "a")
+p <- ggplot(df, aes(x,y)) + geom_point()
+p + scale_x_continuous("X axis")
+p + scale_x_continuous(quote(a + mathematical ^ expression))
+
+# Because changing labels is such a common task, there are three helper functions: xlab(), ylab(), and labs()
+
+p <- ggplot(df, aes(x,y)) + geom_point(aes(color = z))
+p + xlab("X axis") + ylab("Y axis") 
+p + labs(x = "X axis", y = "Yaxis", color = "Color\nlegend")
+
+# There are two ways to remove the axis label:
+# 1. Setting it to "" omits the label but still allocates space
+# 2. NULL removes the label and its space
+
+P <- ggplot(df, aes(x,y)) + geom_point() + theme(plot.background = element_rect(color = "grey50"))
+p + labs(x = "", y ="")
+p + labs(x = NULL, y = NULL)
+
+###############################################################################################################################################################################################
+# 6.3.2 Breaks and Labels
+###############################################################################################################################################################################################
+# The **breaks** argument controls which values appear as tick marks on axes and keys on legends.
+# Each break has an associated label, controlled by the **labels** argument. If **labels** is set, than **breaks** must also be set, otherwise the data changes, the breaks will no longer align with the labels
+
+df <- data.frame(x = c(1, 3, 5) * 1000, y = 1)
+axs <- ggplot(df, aes(x, y)) + geom_point() + labs(x = NULL, y = NULL)
+axs
+axs + scale_x_continuous(breaks = c(2000, 4000))
+axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
+
+
