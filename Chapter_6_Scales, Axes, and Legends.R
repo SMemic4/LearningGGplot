@@ -132,4 +132,59 @@ axs
 axs + scale_x_continuous(breaks = c(2000, 4000))
 axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 
+leg <- ggplot(df, aes(y, x, fill = x)) + geom_tile() + labs(x = NULL, y = NULL)
+leg
+leg + scale_fill_continuous(breaks = c(2000, 4000))
+leg + scale_fill_continuous(breaks = c(2000, 4000), labels = c("2k", "4k")) # Adjusts the scale legend with custom labels
+
+# To relabel the breaks in a categorical scale, use a named labels vector:
+
+df2 <- data.frame(x = 1:3, y = c("a", "b", "c"))
+ggplot(df2, aes(x, y)) + geom_point()
+ggplot(df2, aes(x, y)) + geom_point() + scale_y_discrete(labels = c(a = "apple", b = "banana", c = "carrot"))
+
+# To suppress breaks (and for axes, grid lines) or labels set them to NULL:
+
+axs + scale_x_continuous(breaks = NULL)
+axs + scale_x_continuous(labels = NULL)
+
+leg + scale_fill_continuous(breaks = NULL)
+leg + scale_fill_continuous(labels = NULL)
+
+# Additionally, a function can be supplied to **breaks** or **labels**.
+# The **breaks** function should have one argument, the limits ( a numeric vector of length two), and should return a numeric vector of breaks
+# The **labels** function should accept a numeric vector of breaks and return a character vector of labels (the same length as the input)
+# The scales package provides a number of useful labeling functions
+
+# The scales package provides a number of useful labeling functions:
+# scales::comma_format() - Adds commas to make it easier to read large numbers
+# scales::unit_format(unit, scale) - Adds a unit suffix, optionally scaling
+# scales::dollar_format(prefix, suffix) - Displays currency values, rounding to two decimal places and adding a prefix or suffix
+# scales::wrap_format() - Wraps long labels into multiple lines
+
+axs + scale_y_continuous(labels = scales::percent_format()) # Coverts the y axis to a percentage scale
+axs + scale_y_continuous(labels = scales::dollar_format()) # Adds $ signs to the y axis and converts scale to dollar amount
+
+# The minor breaks (the faint grid lines that appear between the major grid lines) can be adjusted by supplying a numeric vector of positions to the minor_breaks argument
+
+df <- data.frame(x = c(2, 3, 5, 10, 200, 3000), y = 1)
+ggplot(df, aes(x, y)) +
+  geom_point() +
+  scale_x_log10()
+
+mb <- as.numeric(1:10 %o% 10 ^ (0:4))
+ggplot(df, aes(x, y)) +
+  geom_point() +
+  scale_x_log10(minor_breaks = log10(mb))
+
+###############################################################################################################################################################################################
+# 6.3.3 Exercises
+###############################################################################################################################################################################################
+# Recreate the following graph
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() + 
+  scale_x_continuous(breaks = c(2,3,4,5,6,7), labels = c("2 L", "3 L", "4 L", "5 L", "6 L", "7 L")) +
+  scale_y_continuous(quote(Highway  (Miles/Gallon)))
+
+# 2.List the three different types of object you can supply to the breaks argument. How do breaks and labels differ?
 
