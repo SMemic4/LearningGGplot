@@ -187,4 +187,71 @@ ggplot(mpg, aes(displ, hwy)) + geom_point() +
   scale_y_continuous(quote(Highway  (Miles/Gallon)))
 
 # 2.List the three different types of object you can supply to the breaks argument. How do breaks and labels differ?
+# Breaks can be supplied a NULL, a waiver(), a character vector of breaks, or a function. Breaks are the actual values of the plot will scale, while labels are simply the aesthetic display
+
+# 3. Recreate the following plot
+
+ggplot(mpg, aes(displ, hwy, color = drv)) + geom_point() + scale_color_discrete(labels = c("4wd", "fwd", "rwd"))
+
+# 4. What label function allows you to create mathematical expressions?What label function converts 1 to 1st, 2 to 2nd, and so on?
+# quote() is used for mathematical expressions. scales::ordinal_format() to a convert numbers to a list (1st, 2nd, 3rd)
+
+# 5. What are the three most important arguments that apply to both axes and legends? What do they do? Compare and contrast their operation for axes vs. legends.
+# Limits, breaks, and values
+
+###############################################################################################################################################################################################
+# 6.4 Legends
+###############################################################################################################################################################################################
+# While the most important parameters are shared between axes and legends, there are some that only apply to legends. Legends are more complicated than axes because:
+# 1. A legend can display multiple aesthetics (color and shape) from multiple layers, and the symbol displayed in a legends varies based on the geom used in the layer
+# 2. Axes always appear in the same place. Legends can appear in different places
+# 3. Legends have considerably more details that can be altered
+
+###############################################################################################################################################################################################
+# 6.4.1 Layers and Legends
+###############################################################################################################################################################################################
+# A legend may need to draw symbols from multiple layers. For example if color was mapped to both points and lines, the keys will show both points and lines. The legends varies based on the plot.
+# By default, a layer will only appear if the corresponding aesthetic is mapped to a variable with aes(). A layer can be prevented from appearing in the legend with show.legend: FALSE. 
+# show.legend : TRUE forces a layer to appear when it otherwise wouldn't. 
+
+df <- data.frame(x = 1:3, y = 1:3, z = c("a", "b", "c"))
+ggplot(df, aes(y,y)) + geom_point(size = 4, color = "grey20") + geom_point(aes(color = z), size = 2)
+ggplot(df, aes(y,y)) + geom_point(size = 4, color = "grey20", show.legend = FALSE) + geom_point(aes(color = z), size = 2)
+
+# Geoms in the legend can be adjusted to display differently to the geom in the plot. By using the override.aes parameter of guide_legend()
+
+norm <- data.frame(x = rnorm(1000), y = rnorm(1000))
+norm$z <- cut(norm$x, 3, labels = c("a","b", "c"))
+ggplot(norm, aes(x, y)) + geom_point(aes(color = z, alpha = 0.1))
+ggplot(norm, aes(x, y)) + geom_point(aes(color = z, alpha = 0.1)) + guides(color = guide_legend(override.aes = list(alpha = 1)))
+
+# ggplot2 tries to use the fewest number of legends to accurately convey the aesthetics in the plot. It does this by combining legends where the same variable is mapped to different aesthetics.
+# If both a color and shape are mapped to the same variable then only a single legend is necessary. 
+
+ggplot(df, aes(x, y)) + geom_point(aes(colour = z)) # Colored points
+ggplot(df, aes(x, y)) + geom_point(aes(shape = z)) # Shaped points
+ggplot(df, aes(x, y)) + geom_point(aes(shape = z, colour = z)) # Colored shaped points
+
+# In order for legends to be merged, they must have the same name. Changing the name of one scale requires that all of them be changed. 
+
+###############################################################################################################################################################################################
+# 6.4.2 Legend Layout
+###############################################################################################################################################################################################
+# A number of settings that affect the overall display of the legends are controlled through the theme system. Modify the legend with the theme() function
+# The position and justification of legends are controlled by the theme setting legend.position. It takes the values "right", "left", "top" "bottom", or "none" (no legend)
+
+df <- data.frame(x = 1:3, y = 1:3, z = c("a", "b", "c")) 
+base <- ggplot(df, aes(x, y)) + geom_point(aes(color = z), size = 3) + xlab(NULL) + ylab(NULL)
+
+base + theme(legend.position = "right") # The default
+base + theme(legend.position = "left")
+base + theme(legend.position = "top")
+base + theme(legend.position = "bottom")
+base + theme(legend.position = "none")
+
+# Switching between left/right and top/bottom modifies how the keys in each legend are laid out (horizontal or vertically), and how multiple legends are stacked (horizontally or vertically)
+# These options can be adjusted independently:
+# legend.direction - Changes the layout of items in legends ("horizontal" or "vertical")
+# legend.box - Changes arrangement of multiple legends ("horizontal" or "vertical")
+# legend.box - Justification of each legend within the overall bounding box, when there are multiple legends ("top", "bottom", "left", or "right")
 
