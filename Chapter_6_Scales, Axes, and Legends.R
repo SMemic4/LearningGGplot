@@ -255,3 +255,215 @@ base + theme(legend.position = "none")
 # legend.box - Changes arrangement of multiple legends ("horizontal" or "vertical")
 # legend.box - Justification of each legend within the overall bounding box, when there are multiple legends ("top", "bottom", "left", or "right")
 
+# Alternatively, if there's a lot of blank space on the plot, the legend can be placed inside the plot.
+# This can be done by setting legend.position to a numeric vector of length two. The number represents a relative location in the panel area: c(0,1) is top left, c(1,0) is bottom-right.
+# The corner of which legend.position refers to can be controlled with legend.justification. However, positioning the legend exactly in a specific spot will require a lot of trial and error
+
+base <- ggplot(df, aes(x,y)) + geom_point(aes(color = z), size = 3)
+
+base + theme(legend.position = c(0, 1), legend.justification = c(0, 1))
+base + theme(legend.position = c(0.5, 0.5), legend.justification = c(0.5, 0.5))
+base + theme(legend.position = c(1, 0), legend.justification = c(1, 0))
+base + theme(legend.position = c(0.3, 0.7), legend.justification = c(1, 0.6))
+
+# There is also a margin around the legends that can be suppressed with legend.margin = unit(0, "mm")
+
+###############################################################################################################################################################################################
+# 6.4.3 Guide Functions
+###############################################################################################################################################################################################
+# The guide functions, guide_colorbar() and guide_legend(), offer additional control over the fine details of the legend. Legends guides can be used for any aesthetic (discrete or continuous), while the color bar can only be used with continuous color scales.
+# The default guide can be overrided using the guide argument of the corresponding scale function, or more conveniently, the guides() helper function.
+# guides() works like labs(): it can override the default guide associated with each aesthetic
+
+df <- data.frame(x = 1, y = 1:3, z = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_raster(aes(fill = z))
+base
+base + scale_fill_continuous(guide = guide_legend())
+base + guides(fill = guide_legend())
+
+# Both functions can take numerous arguments to help control the finer level of details of the text, color, size, and font.
+
+###############################################################################################################################################################################################
+# 6.4.3.1 guide_legend()
+###############################################################################################################################################################################################
+# The legend guide displays individual keys in a table. The most useful options are:
+
+# nrow or ncol which specify the dimensions of the table. Byrow controls how the table is filled: False fills it by column (the default), True fills it by row
+
+df <- data.frame(x = 1, y = 1:4, z = letters[1:4])
+p <- ggplot(df, aes(x,y)) + geom_raster(aes(fill = z))
+p
+p + guides(fill = guide_legend(ncol = 2))
+p + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
+
+# reverse reverses the order of the keys. However the default stack is in the correct order for the graph and legend
+
+p <- ggplot(df, aes(1, y)) + geom_bar(stat = "identity", aes(fill = z))
+p
+p + guides(fill = guide_legend(reverse = TRUE))
+
+# override.aes overrides some of the aesthetic setting derived from each layer. This is useful to make elements in the legend more visually prominent 
+
+# keywidth and keyheight (along with default.unit) allows for the specification of the size of the keys. These are grid units (Ex. unit(1, "cm"))
+
+###############################################################################################################################################################################################
+# 6.4.3.2 guide_colorbar()
+###############################################################################################################################################################################################
+# The color bar guide is designed for continuous range of color. It outputs a rectangle over which the color gradient varies. The most important arguments are:
+# *barwidth* and *barheight* (along with *default.unit*) allowing for the specification of the size of the bar. These are grud units (Ex unit(1, "cm"))
+# *nbin* controls the number of slices. Increase this from the default value of 20 if drawing a very long bar
+# *reverse* flips the color bar to the lowest values at the top
+
+df <- data.frame(x = 1, y = 1:4, z = 4:1)
+p <- ggplot(df, aes(x, y)) + geom_tile(aes(fill = z))
+
+p
+p + guides(fill = guide_colorbar(reverse = TRUE))
+p + guides(fill = guide_colorbar(barheight = unit(4, "cm")))
+
+###############################################################################################################################################################################################
+# 6.4.4 Exercises
+###############################################################################################################################################################################################
+# 1. How do you make legends appear to the left of the plot?
+
+ggplot(mpg, aes(displ,hwy, color = drv)) + geom_point() # Original plot
+ggplot(mpg, aes(displ,hwy, color = drv)) + geom_point() + theme(legend.position = "left") # Plot on the left side
+
+# 2. What’s gone wrong with this plot? How could you fix it?
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(colour = drv, shape = drv)) + scale_colour_discrete("Drive train") 
+# There are two separate legends when they should only be one
+
+ggplot(mpg, aes(displ, hwy)) + geom_point(aes(colour = drv, shape = drv)) + scale_color_discrete("Drive train") + scale_shape_discrete("Drive train")
+# Fixed graph by manually setting both the shape and color to the same title
+
+# 3. Can you recreate the code for this plot?
+
+ggplot(mpg, aes(displ, hwy, color = class)) + 
+  geom_point(size = 3, show.legend = FALSE) + 
+  geom_smooth(method = "lm", aes(displ, hwy, color = class), se = FALSE) + 
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  guides(color = guide_legend(ncol = 8, byrow = TRUE))
+
+###############################################################################################################################################################################################
+# 6.5 Limits
+###############################################################################################################################################################################################
+# The limits, or domain, of a scale are usually derived from the range of the data. There are two reasons why it might be better to specify the limits rather than rely on the data:
+# 1. Making the limits smaller than the range of the data allows for focus on an interesting area of the plot
+# 2. Making the limits larger than the range of data to allow for multiple plots to match up
+
+# Limits are naturally though of as the limits of a position scale, but limits also apply to legends, colors, sizes, and shapes
+
+# Limits can be modified with the limits parameter of the scale:
+# For continuous scales, a numeric vector of length two is applied. To set only an upper or lower limit, set the other value to NA
+# For discrete scales, a character vector which enumerates all possible values
+
+df <- data.frame(x = 1:3, y = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_point()
+
+
+base
+base + scale_x_continuous(limits = c(1.5, 2.5)) # Removed 2 rows containing missing values (`geom_point()`). 
+base + scale_x_continuous(limits = c(0, 4))
+
+# Modifying limits is a common tasks, ggplot2 provides helpers such as xlim(), ylim(), and lims(). These functions inspect their input and create an appropriate scale:
+# xlim(10.20) - A continuous scale from 10 to 20
+# ylim(20,10) - A reversed continuous scale from 20 to 10
+# xlim("a", "b", "c") - A discrete scale.
+# xlim(as.Date(c("2008-05-01", "2008-08-01"))): a date scale from May 1 to August 1 2008.
+
+base + xlim(0, 4)
+base + xlim(4, 0)
+base + lims(x = c(0, 4))
+
+# The range of the axes always extend a little bit past the limits that have been specified to ensure data does not overlap with the axes. This can be eliminated with set *expand = c(0,0)*
+
+ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_raster(aes(fill = density)) + 
+  theme(legend.position = "none")
+ggplot(faithfuld, aes(waiting, eruptions)) +
+  geom_raster(aes(fill = density)) + scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.position = "none")
+
+# By default any data outside the limits is converted to NA. This means that setting the limits is not the same as visually zooming into a region of the plot. 
+# To zoom zoom into the plot, use xlim and ylim arguments to coord_Cartesian(), this performs purely visual zooming and does not affect the underlying data. 
+# This value can also be overrided with oob (out of bounds) argument to the scale. The default is scales::censor() which replaces any value outside the limit with NA. Another option is scales::squish() which squishes all values into the range
+
+df <- data.frame(x = 1:5)
+p <- ggplot(df, aes(x, 1)) + geom_tile(aes(fill = x), colour = "white")
+p
+p + scale_fill_gradient(limits = c(2, 4))
+p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
+
+###############################################################################################################################################################################################
+# 6.5.1 Exercises
+###############################################################################################################################################################################################
+# 1. The following code creates two plots of the mpg dataset. Modify the code so that the legend and axes match, without using faceting
+
+fwd <- subset(mpg, drv == "f")
+rwd <- subset(mpg, drv == "r")
+
+ggplot(fwd, aes(displ, hwy, colour = class)) + 
+  geom_point() +
+  scale_color_discrete("Drive train") +
+  xlim(0, 10) +
+  ylim(0, 45) +
+  expand_limits(color = c("2seater", "compact", "midsize", "minivan", "pickup", "subcompact", "suv"))
+ggplot(rwd, aes(displ, hwy, colour = class)) + 
+
+    geom_point() +
+  scale_color_discrete("Drive train")+
+  xlim(0, 10) +
+  ylim(0, 45) +
+  expand_limits(color = c("2seater", "compact", "midsize", "minivan", "pickup", "subcompact", "suv"))
+
+
+
+
+# 2. What does expand limits() do and how does it work? Read the source code.
+# The function takes a values or values and expands to the graph to include a singular point or a given range.
+p <- ggplot(mtcars, aes(mpg, wt)) + geom_point()
+p
+p + expand_limits(x = 0) # The point zero is included in the graph
+p + expand_limits(y = c(1, 15)) # includes all y values between 1 and 15
+p + expand_limits(x = 0, y = 0) # Includes the origin in the set of data
+
+# 3. What happens if you add two xlim() calls to the same plot? Why?
+
+p + xlim(15,30) + xlim(10, 40) # The existing scale is replaced with the scale that comes after it
+
+# 4. What does scale x continuous(limits = c(NA, NA)) do?
+
+p <- ggplot(mtcars, aes(mpg, wt)) + geom_point()
+p + scale_x_continuous(limits = c(NA, NA))
+# It simply uses the original limits assigned from the data
+
+###############################################################################################################################################################################################
+# 6.6 Scales Toolbox
+###############################################################################################################################################################################################
+# Besides adjusting the options of the default scales, they can also be completely replaced with new scales.
+# Scales can be divided roughly into four families:
+# * Continuous position scales used to map integer, numeric, and date/time data to x and y positions
+# * Color scales, used to map continuous and discrete data to colors
+# * Manual scales used to map discrete variables to an aesthetic such as size, line, type, shape, or color.
+# * The identity scale, paradoxically used to plot variables without scaling them. 
+
+###############################################################################################################################################################################################
+# 6.6.1 Continuous Position Scales
+###############################################################################################################################################################################################
+# Every plot has two position scales, *x* and *y*. The most common continuous position scales are scale_x_continuous() and scale_y_continuous() which linearly map data to the x and y axis
+# Interesting variations of these scales are produced through transformations. Every continuous scale takes a *trans* argument, allowing for a variety of transformations:
+
+ggplot(mpg, aes(displ, hwy)) + geom_point() 
+ggplot(mpg, aes(displ, hwy)) + geom_point() + scale_y_continuous(trans = "reciprocal") # Converts fuel economy to fuel consumption
+
+ggplot(diamonds, aes(price,carat)) + geom_bin2d()
+ggplot(diamonds, aes(price, carat)) + geom_bin2d() + scale_x_continuous(trans = "log10") +scale_y_continuous(trans = "log10") # Log10 x and y axis
+
+# The transformation is carried out by a *transformer*, which describes the transformation, its inverse, and how to draw the labels. 
+# Common shortcuts for transformers include: scale_x_log10(), scale_x_sqrt(), and scale_x_reverse()
+
+# Transformation can also be done on the data instead of scaling the plot. If using using a transformed scale, the axes will be labelled in the original data space, if the data is transformed the axes will be labelled in the transformed space
+# Transformation always occurs before statistical summaries. To transform, after statistical computations use *coord_trans()*
+
