@@ -467,3 +467,61 @@ ggplot(diamonds, aes(price, carat)) + geom_bin2d() + scale_x_continuous(trans = 
 # Transformation can also be done on the data instead of scaling the plot. If using using a transformed scale, the axes will be labelled in the original data space, if the data is transformed the axes will be labelled in the transformed space
 # Transformation always occurs before statistical summaries. To transform, after statistical computations use *coord_trans()*
 
+# Date and date/time data are continuous variables with special labels. scale_x_date() and scale_x_datetime() work similarly to scale_x_continuous() but have special arguments that work in date_friendly units:
+# *date_breaks* and *date_minor_breaks()* allows for the positioning by date units (years, months, weeks, day, hours, minutes, and seconds)
+# date_labels controls the display of the labels using the same formatting strings as in strptime() and format()
+
+base <- ggplot(economics, aes(date, psavert)) + geom_line(na.rm = TRUE) + labs(x = NULL, y = NULL)
+base # Default breaks and labels
+base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
+
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2005-01-01")),
+  date_labels = "%b %y",
+  date_minor_breaks = "1 month"
+)
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2004-06-01")),
+  date_labels = "%m/%d",
+  date_minor_breaks = "2 weeks"
+)
+
+###############################################################################################################################################################################################
+# 6.6.2 Color
+###############################################################################################################################################################################################
+# After position, the most commonly used aesthetic is color,
+# HCL (Hue, chroma, and luminescence) color space has three components:
+# 1. Hue, a number between 0 and 360 (an angle) which gives the color of the color 
+# 2. Chroma is the purity of a color. A chroma of 0 is grey, and the maximum value of chroma varies with luminescence. 
+# 3. Luminescence is the lightness of the color. A luminescence of 0 produces black and a luminescence of 1 produces white
+
+###############################################################################################################################################################################################
+# 6.6.2.1 Continuous
+###############################################################################################################################################################################################
+# There are four continuous color scales:
+
+erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
+  geom_raster() +
+  scale_x_continuous(NULL, expand = c(0, 0)) +
+  scale_y_continuous(NULL, expand = c(0, 0)) +
+  theme(legend.position = "none")
+
+# scale_color_gradient () and scale_fill_gradient() - A two color gradient, low-high. This is the default scale for continuous color, and is the same as scale_color_continuous(). Arguments low and high control the colors at either end of the gradient. 
+# Generally, for continuous color scales, the hue should remain consistent and the chroma and luminescence should vary. The munsell color system is useful for this since it provides a way of specifying colors based on their hue, chroma, and luminescence.
+# Use *munsell:hue_slice("5Y") to see the valid chroma and luminescence values for a given hue
+
+erupt
+erupt + scale_fill_gradient(low = "white", high = "black")
+erupt + scale_fill_gradient(
+  low = munsell::mnsl("5G 9/2"),
+  high = munsell::mnsl("5G 6/8")
+)
+
+# Scale_color_gradient2(0 and scale_fill_gradient2() - A three color gradient, low-med-high (red-whote_blue). These scales a mid color value for the midpoint along with low and high colors. 
+
+mid <- median(faithfuld$density)
+erupt + scale_fill_gradient2(midpoint = mid)
+
+# scale_color_gradientn() and scale_fill_gradientn() - A custom n color gradient. 
+
+
