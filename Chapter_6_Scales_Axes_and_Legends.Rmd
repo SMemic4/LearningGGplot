@@ -564,5 +564,51 @@ Besides adjusting the options of the default scales, they can also be completely
 -   The identity scale, paradoxically used to plot variables without scaling them.
 
 ------------------------------------------------------------------------
-
 ## 6.6.1 Continuous Position Scales
+
+Every plot has two position scales, *x* and *y*. The most common continuous position scales are scale_x\_continuous() and scale_y\_continuous() which linearly map data to the x and y axis. Interesting variations of these scales are produced through transformations. Every continuous scale takes a *trans* argument, allowing for a variety of transformations:
+
+```{r cache=TRUE, fig.show='hold', out.width="25%"}
+ggplot(mpg, aes(displ, hwy)) + geom_point() 
+ggplot(mpg, aes(displ, hwy)) + geom_point() + scale_y_continuous(trans = "reciprocal") # Converts fuel economy to fuel consumption
+
+ggplot(diamonds, aes(price,carat)) + geom_bin2d()
+ggplot(diamonds, aes(price, carat)) + geom_bin2d() + scale_x_continuous(trans = "log10") +scale_y_continuous(trans = "log10") # Log10 x and y axis
+```
+
+The transformation is carried out by a *transformer*, which describes the transformation, its inverse, and how to draw the labels. Common shortcuts for transformers include: scale_x\_log10(), scale_x\_sqrt(), and scale_x\_reverse()
+
+Transformation can also be done on the data instead of scaling the plot. If using using a transformed scale, the axes will be labelled in the original data space, if the data is transformed the axes will be labelled in the transformed space. Transformation always occurs before statistical summaries. To transform, after statistical computations use *coord_trans()*
+
+Date and date/time data are continuous variables with special labels. scale_x\_date() and scale_x\_datetime() work similarly to scale_x\_continuous() but have special arguments that work in date_friendly units: - *date_breaks* and *date_minor_breaks()* allows for the positioning by date units (years, months, weeks, day, hours, minutes, and seconds) - date_labels controls the display of the labels using the same formatting strings as in strptime() and format()
+
+```{r cache=TRUE, fig.show='hold', out.width="25%"}
+base <- ggplot(economics, aes(date, psavert)) + geom_line(na.rm = TRUE) + labs(x = NULL, y = NULL)
+base # Default breaks and labels
+base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
+
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2005-01-01")),
+  date_labels = "%b %y",
+  date_minor_breaks = "1 month"
+)
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2004-06-01")),
+  date_labels = "%m/%d",
+  date_minor_breaks = "2 weeks"
+)
+  
+```
+
+------------------------------------------------------------------------
+
+## 6.6.2 Color
+
+############################################################################################################################################################################################### 
+
+After position, the most commonly used aesthetic is color. HCL (Hue, chroma, and luminescence) color space has three components:
+
+1.   Hue, a number between 0 and 360 (an angle) which gives the color of the color
+2.  Chroma is the purity of a color. A chroma of 0 is grey, and the maximum value of chroma varies with luminescence.
+3.  Luminescence is the lightness of the color. A luminescence of 0 produces black and a luminescence of 1 produces white
+
