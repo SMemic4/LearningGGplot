@@ -523,5 +523,62 @@ mid <- median(faithfuld$density)
 erupt + scale_fill_gradient2(midpoint = mid)
 
 # scale_color_gradientn() and scale_fill_gradientn() - A custom n color gradient. 
+# The **colorspace package** provides palettes that can be used to create good color scales
+
+erupt + scale_fill_gradientn(colors = terrain.colors(7))
+erupt + scale_fill_gradientn(colors = colorspace::heat_hcl(7))
+erupt + scale_fill_gradientn(colors = colorspace::diverge_hcl(7))
+
+# By default colors will be evenly spaced along the range of the data. To make them unevenly spaced, use the values argument, which should be a vector of values between 0 and 1
+
+# scale_color_distiller() and scale_fill_gradient() - Apply the color brewer color scales to continuous data. They can be used the same way as scale_fill_brewer()
+
+erupt + scale_fill_distiller()
+erupt + scale_fill_distiller(palette = "RdPu")
+erupt + scale_fill_distiller(palette = "YlOrBr")
+
+# All continuous color scales have an na.value t parameter that controls what color is used for missing values (including values outside the range of the scale limits)
+# By default it is set to grey which will stand out when used within a colorful scale
+# If using a black and white scale, it may be useful to set it to something else to make it more obvious 
+
+df <- data.frame(x = 1, y = 1:5, z = c(1, 3, 2, NA, 5))
+p <- ggplot(df, aes(x, y)) + geom_tile(aes(fill = z), size = 5)
+p
+p + scale_fill_gradient(na.value = NA) # Make missing colors invisible
+p + scale_fill_gradient(low = "black", high = "white", na.value = "red") # Customizes on a black and white scale
+
+###############################################################################################################################################################################################
+# 6.6.2.2 Discrete
+###############################################################################################################################################################################################
+# There are four scales for discrete data:
+
+df <- data.frame(x = c("a", "b", "c", "d"), y = c(3, 4, 1, 2))
+bars <- ggplot(df, aes(x, y, fill = x)) +
+  geom_bar(stat = "identity") +
+  labs(x = NULL, y = NULL) +
+  theme(legend.position = "none")
+
+# The default color scheme, scale_color_hue(), picks evenly spaced hues around the HCL color wheel. This works well for up to eight colors but afterwards it becomes much harder to tell the different colors apart.
+# The default chroma and luminescence and hues can be controlled with the h, c and l arguments
+
+bars
+bars + scale_fill_hue(h = c(180, 360))
+bars + scale_fill_hue(c = 50, h = c(180,360), l = 50)
+
+# One disadvantage of the default color scheme, is that all of the color have the same luminescence and chrome, that when they are printed in black and white all of them appear identical shades of grey
+
+# scale_color_brewer() uses handpicked "ColorBrewer: colors. These colors have been designed to work well in a wide variety of situations, although focus on maps and colors tend to wrk better when displayed in large areas.
+# For categorical data, the palettes most of interest are "Set1" and "Dark2: for points, and "Set2", "pastel1", "Pastel2" and "Accent" for areas. 
+# Use RcolorBrewer::display.brewer.all() to list all palettes
+
+bars + scale_fill_brewer(palette = "Set3")
+bars + scale_fill_brewer(palette = "Set2")
+bars + scale_fill_brewer(palette = "Accent")
+
+# scale_color_grey() maps discrete data to grays, from light to dark
+
+bars + scale_fill_grey()
+bars + scale_fill_grey(start = 0.5, end = 1)
+bars + scale_fill_grey(start = 0, end = 0.5)
 
 
