@@ -581,4 +581,107 @@ bars + scale_fill_grey()
 bars + scale_fill_grey(start = 0.5, end = 1)
 bars + scale_fill_grey(start = 0, end = 0.5)
 
+# scale_color_manual() is useful for already made discrete color palettes. 
+
+library(wesanderson)
+bars + scale_fill_manual(values = wes_palette("GrandBudapest"))
+bars + scale_fill_manual(values = wes_palette("Zissou"))
+bars + scale_fill_manual(values = wes_palette("Rushmore"))
+
+# For design purposes one set of colors is not uniformly good for all purposes: bright colors work well for points, but are overwhelming on bars. Subtle colors work well for bars but are hard to see on points
+
+df <- data.frame(x = 1:3 + runif(30), y = runif(30), z = c("a", "b", "c"))
+point <- ggplot(df, aes(x, y)) + geom_point(aes(color = z)) +
+  theme(legend.position = "none") + labs(x = NULL, y = NULL)
+
+point + scale_color_brewer(palette = "Set1")
+point + scale_color_brewer(palette = "Set2")
+point + scale_colour_brewer(palette = "Pastel1")
+
+# Subtler colors work better with areas
+df <- data.frame(x = 1:3, y = 3:1, z = c("a", "b", "c"))
+area <- ggplot(df, aes(x, y)) +
+  geom_bar(aes(fill = z), stat = "identity") +
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL)
+area + scale_fill_brewer(palette = "Set1")
+area + scale_fill_brewer(palette = "Set2")
+area + scale_fill_brewer(palette = "Pastel1")
+
+###############################################################################################################################################################################################
+# 6.6.3.The Manual Discrete Scale
+###############################################################################################################################################################################################
+# The discrete scales, scale_linetype(), scale_shape(), and scale_size_discrete() basically have no options. These scales are just a list of valid values that are mapped to the unique discrete values
+# To customize these scales, a new scale must be created with the manual scale: scale_shape_manual(), scale_linetype_manual(), and scale_color_manual(). 
+# The manual scale has one important argument, values, where the values the scale should produce should be specified
+# If the vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variables. 
+
+plot <- ggplot(msleep, aes(brainwt, bodywt)) +
+  scale_x_log10() +
+  scale_y_log10()
+
+plot + geom_point(aes(color = vore)) + scale_color_manual( values = c("red", "orange", "green", "blue"), na.value = "grey50")
+
+colors <- c(carni = "red", insecti = "orange", herbi = "green", omni = "blue") # Creating a custom discrete color scale for specific plots
+
+plot + geom_point(aes(color = vore)) + scale_color_manual(values = colors) # Leaving out the na.value does appears to automatically assign a grey value point to unassigned variables
+
+# The following example shows a creative use of scale_color_manual() to display multiple variables on the same plot and show a useful legend. In most plotting systems, the lines would be colored and then a legend would be added
+
+huron <- data.frame(year = 1875:1972, level = as.numeric(LakeHuron))
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5), color = "red") +
+  geom_line(aes(y = level - 5), color = "blue")
+
+# That doesn't work in ggplot because there's no way to add a legend manually, Instead, give the lines informative labels
+
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5, color = "above")) +
+  geom_line(aes(y = level - 5, color = "below"))
+
+# Then tell the scale how to map labels to colors
+
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5, color = "above")) +
+  geom_line(aes(y = level - 5, color = "below")) +
+  scale_color_manual("Direction", values = c("above" = "red", "below" = "blue"))
+
+###############################################################################################################################################################################################
+# 6.6.4 The Identity Scale
+###############################################################################################################################################################################################
+# The identity scale is used when data is already scaled, when the data and aesthetic spaces are the same. 
+# The code below shows an example where the identity scale is useful. luv_colours contains the locations of all R's built-in colors in the LUV color space (the space that HCL is based on).
+# A legend is unnecessary, because the point color represents itself: the data and aesthetics spaces are the same
+
+head(luv_colours)
+
+ggplot(luv_colours, aes(u, v)) + 
+  geom_point(aes(color = col), size = 3) +
+  scale_color_identity() + 
+  coord_equal()
+
+###############################################################################################################################################################################################
+# 6.6.5 Exercises
+###############################################################################################################################################################################################
+# 1. Compare and contrast the four continuous color scales with the four discrete scales:
+
+# Continuous:
+# scale_color_gradient() and scale_fill_gradient(): A two color scale gradient, with a low and high value. 
+# scale_color_gradient2() and scale_fill_gradient2(): A three color scale gradient. These gradient has a low, high, and midpoint for each of the colors. 
+# scale_color_gradientn() and scale_fill_gradientn(): A custom n_color gradient. Useful when combined with a color palette. The colors are evenly spaced along a range of data
+# scale_color_distiller() and scale_fill_gradient(): Applies the color brewer color scales to continuous data
+# All continuous color scales have an na.value parameter that controls the color for missing values (the default is grey)
+
+# Discrete: 
+# scale_color_hue(): Picks evenly spaced hues around the HCL color wheel. This works well for up to 8 colors but becomes difficult to read after that. The  chrome, lumisence, and range can be controlled with the h.c.l arguments
+# scale_color_brewer(): Uses handpicked color brewer colors. Basically premade color sets
+# scale_color_grey(): Maps discrete data to greys, from light to dark
+# scale_color_manual(): Useful when combined with a custom discrete color palette. Or can be provided a vector of values
+
+###############################################################################################################################################################################################
+# End of Chapter 6
+###############################################################################################################################################################################################
+
+
+
 
