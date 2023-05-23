@@ -118,7 +118,35 @@ ggplot(df1, aes(x, y)) + geom_point(data = df2, color = "red", size = 2) + geom_
 ###############################################################################################################################################################################################
 # 7.2.5 Grouping vs. Faceting 
 ###############################################################################################################################################################################################
+# Faceting is an alternative to using aesthetics (like color, shape, or size) to differentiate groups. Both techniques have their strengths and weaknesses
+# With faceting each group is own it's own with no overlap with the other groups. This is useful for when groups overlap each other a lot, but makes it harder to make out smaller differences between the two
+# When grouping by aesthetics, the groups may overlap but it becomes easier to see smaller differences between the different groups
 
+df <- data.frame(
+  x = rnorm(120, c(0, 2, 4)),
+  y = rnorm(120, c(1, 2, 1)),
+  z = letters[1:3]
+)
+
+ggplot(df, aes(x,y)) + geom_point(aes(color = z)) # Scatterplot with the different groups labeled a separate color
+ggplot(df, aes(x,y)) + geom_point() + facet_wrap(~z) # Facet wrap of the different groups
+
+# Comparisons between facets often benefit through useful annotations
+
+df_sum <- df %>% group_by(z) %>% summarize(x = mean(x), y = mean(y)) %>% rename(z2 = z)
+ggplot(df, aes(x, y)) + geom_point() + geom_point(data = df_sum, aes(color = z2), size = 4) + facet_wrap(~z)
+
+#Another useful technique is placing all of the data in the background of each panel
+
+df2 <- select(df, -z)
+
+ggplot(df, aes(x,y)) +geom_point(data = df2, color = "grey50") + geom_point(aes(color = z)) + facet_wrap(~z) # A facet wrapped plot that contains all of the points for each facet but each column has it's specific group highlighted in it's color
+
+###############################################################################################################################################################################################
+# 7.2.6 Continuous Variables
+###############################################################################################################################################################################################
+# To facet continuous variables, they must be discretized. GGplot2 provides three helper functions to achieve this:
+# 1. Divide the data into n bins each of the same length with cut_interval(x,n)
 
 
 
