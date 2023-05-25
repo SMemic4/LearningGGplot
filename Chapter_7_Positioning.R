@@ -147,6 +147,112 @@ ggplot(df, aes(x,y)) +geom_point(data = df2, color = "grey50") + geom_point(aes(
 ###############################################################################################################################################################################################
 # To facet continuous variables, they must be discretized. GGplot2 provides three helper functions to achieve this:
 # 1. Divide the data into n bins each of the same length with cut_interval(x,n)
+# 2. Divide the data into bins of width: cut_width(x, width)
+# 3. Divide the data into n bins containing (approximately the same number of points): cut_number(x, n = 10)
+
+mpg2$disp_w <- cut_width(mpg2$displ, 1) # Bins of width 1
+mpg2$disp_i <- cut_interval(mpg2$displ, 6) # Six bins of equal length
+mpg2$disp_n <- cut_number(mpg2$displ, 6) # Six bins containing equal numbers of points
+
+plot <- ggplot(mpg2, aes(cty, hwy)) + geom_point() + labs(x = NULL, y = NULL)
+
+plot + facet_wrap(~disp_w, nrow = 1)
+plot + facet_wrap(~disp_i, nrow = 1)
+plot + facet_wrap(~disp_n, nrow = 1)
+
+# Note that the faceting formula does not evaluate functions, so they must first be created as a new variable containing the discreteised data. 
+
+###############################################################################################################################################################################################
+# 7.2.7 Exercises
+###############################################################################################################################################################################################
+# 1. Diamonds: display the distribution of price conditional on cut and carat. Try faceting by cut and grouping by carat. Try faceting by carat and grouping by cut. Which is preferred?
+
+ggplot(diamonds, aes(x = carat, y = price)) + geom_point() + facet_wrap(~cut)
+
+ggplot(diamonds, aes(x = price)) + geom_histogram(aes(fill = cut)) 
+
+# 2. Why is facet_wrap() generally more useful than facet_grid()
+
+# Facet_wrap wraps a 1d sequence of panels into 2d. This is generally a better use of screen space than facet_grid() due to most grids being roughly rectangular
+
+# 3. Recreate the following plot. It facets mpg2 by class, overlaying a smooth curve fit to the full dataset
+
+ggplot(mpg2, aes(displ, hwy)) + geom_point() + geom_smooth(data = select(mpg2, -class), se = FALSE) + facet_wrap(~class)
+
+###############################################################################################################################################################################################
+# 7.3 Coordinate Systems
+###############################################################################################################################################################################################
+# Coordinate systems have two main jobs
+# 1. Combine the two position aesthetics to produce a 2d position on the plot. The position aesthetics are called x and y but may be called something else depending on the coordinate system
+# 2. In coordinate with the facter, coordinate systems draw axes and panel backgrounds. While the scales control the values that appear on the axes, and how they map from data to position, it is the coordinate system that actually draws them
+
+# There are two types of coordinate systems. Linear coordinates system preserve the shape of geoms:
+# coord_Cartesian(): The default Cartesian coordinate system, where the 2d position of an element is given by the combination of the x and y positions
+# coord_flip(): Cartesian coordinate system with x and y axes flipped
+# coord_fixed(): Cartesian coordinate system with a fixed aspect ratio
+
+# Non-linear coordinate system can change the shapes: a straight line may no longer be straight. The closest distance between two points may no longer be a line
+# coord_map()/coord_quickmap() - Map projections
+# coord_polar(): Polar coordinates
+# coord_trans(): Apply arbitrary transformations to x and y positions after the data has been processed by the stat
+
+###############################################################################################################################################################################################
+# 7.4 Linear Coordinate Systems
+###############################################################################################################################################################################################
+# There are three linear coordinate systems:
+# 1. coord_Cartesian()
+# 2. coord_flip()
+# 3. coord_fixed()
+
+###############################################################################################################################################################################################
+# 7.4.1 Zooming into a Plot with coord_Cartesian()
+###############################################################################################################################################################################################
+# coord_Cartesian() has arguments xlim and ylim. This allows for only a small region of the data to be displayed without discarding any other data
+
+base <- ggplot(mpg, aes(displ, hwy)) + geom_point() + geom_smooth()
+
+base # Full dataset
+
+base + scale_x_continuous(limits = c(5,7)) # Scaling to 5-7 throws away all data outside this range
+base + coord_cartesian(xlim = c(5,7)) # Zooms in on this data without removing it. Notice how the geom_smooth() changes when data is removed
+
+###############################################################################################################################################################################################
+# 7.4.2 Flipping the Axes with coord_flip()
+###############################################################################################################################################################################################
+# coord_flip() can be used to exchange the x and y axes
+
+ggplot(mpg, aes(displ, cty)) + geom_point() + geom_smooth() # Original data
+ggplot(mpg, aes(cty, displ)) + geom_point() + geom_smooth() # Changing the axes alters the data
+ggplot(mpg, aes(displ, cty)) + geom_point() + geom_smooth() + coord_flip() # Fits to the original data and than rotates the output
+
+###############################################################################################################################################################################################
+# 7.4.3 Equal Scales with coord_fixed()
+###############################################################################################################################################################################################
+# Coord_fixed() fixes the ratio of length on the x and y axes. The default ratio ensures that the x and y axes have equal scale.
+
+###############################################################################################################################################################################################
+# 7.5 Non-linear Coordinate Systems
+###############################################################################################################################################################################################
+# Non-linear coordinates can change the shape of geoms
+# For example, in polar coordinates a rectangle becomes an arc, in a map projection, the shortest path between two points is not necessarily a straight line
+
+rect <- data.frame(x = 50, y = 50)
+line <- data.frame(x = c(1, 200), y = c(100, 1))
+base <- ggplot(mapping = aes(x, y)) +
+  geom_tile(data = rect, aes(width = 50, height = 50)) +
+  geom_line(data = line) + 
+  xlab(NULL) + ylab(NULL)
+
+base
+base + coord_polar("x") # The line is curved and the rectangle has become an arc
+base + coord_polar("y") # Line is curved, and the square has become "U-shaped"
+base + coord_flip() # Flips x and y coordinates
+base + coord_trans(y = "log10") # Applies a log10 transformation to the y axis after the statistical calculations have been completed
+base + coord_fixed() # Scales the graph
+
+# Transformation takes part in two steps
+# First, the parameterisation of each geom is changed to be purely location-based, rather than location and dimension-based. 
+
 
 
 
