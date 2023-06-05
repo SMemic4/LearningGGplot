@@ -252,6 +252,112 @@ base + coord_fixed() # Scales the graph
 
 # Transformation takes part in two steps
 # First, the parameterisation of each geom is changed to be purely location-based, rather than location and dimension-based. 
+# For example, a bar can be represented as ab x position (a location), a height and a width (dimensions)
+# Interpreting height and width in a non-Cartesian coordinate system is hard because a rectangle may no longer have constant height and width, so it's converted to a purely location based representation, a poly gon defined by the four corners
+# This effectively converts all geoms to a combination of points, lines, and polygons
+# Secondly, after all geoms have a location based representation, the next step is transforming each location into the new coordinate system.
+# It is easy to transform points, because a point is still a point no matter the coordinate system
+# Lines and polygons are harder, because a straight line may no longer be straight in the new coordinate system
+# To circumvent this issue, it is assumed that all lines will by broken into many small line segments and transformed for each segment
+# This process is called munching: 
+
+# First, start with a line parameterised by two endpoints
+
+df <- data.frame(r = c(0,1), theta = c(0, 3/2 * pi))
+ggplot(df, aes(r, theta)) + geom_line() + geom_point(size = 2, color = "red") # A line with two end points
+
+# Second, break it into multiple line segments, each with two endpoints
+
+intrep <- function(rng, n) # Function that breaks up a line into n segments
+{
+  seq(rng[1], rng[2], length = n)
+}
+
+munched <- data.frame(r = intrep(df$r, 15), theta = intrep(df$theta, 15)) # Creating the new data set
+
+ggplot(munched, aes(r, theta)) + geom_line() + geom_point(size = 2, color = "red") # Small line as on the graph but broken down into smaller points
+
+# Finally, transform the locations of each piece
+
+transformed <- transform(munched, x = r * sin(theta), y = r * cos(theta))
+ggplot(transformed, aes(x, y)) + geom_path() + geom_point(size = 2, color = "red") + coord_fixed()
+
+# Internally ggplot2, uses many more segments so that the results look smooth
+
+###############################################################################################################################################################################################
+# 7.5.1 Transformations with coord_trans()
+###############################################################################################################################################################################################
+# Like limits, data can be transformed in two places, at the scale level or at the coordinate system
+# coord_trans() has has arguments x and y which should be strings naming the transformer or transformer objects
+# Transforming at the scale level occurs before statistics are computed, and does not change the shape of the geom
+# Transforming at the coordinate system level occurs after the statistics have been computed and does affect the shape of the geom
+# Using both together allows for data to be model on a transformed scale and then back transformed for interpretation
+
+# Linear model on the this original scale is a poor fit
+base <- ggplot(diamonds, aes(carat, price)) + 
+  stat_bin2d() +
+  geom_smooth(method = "lm") +
+  xlab(NULL) +
+  ylab(NULL) +
+  theme(legend.position = "none")
+  
+
+base + scale_x_log10() + scale_y_log10() # Better fit on the scale, but much harder to interpret
+
+pow10 <- scales::exp_trans(10)
+
+base + scale_x_log10() + scale_y_log10() + coord_trans(x = pow10, y = pow10)# Fits on log scale, then back transform to original. Highlights the lack of expensive diamonds with large carats
+
+###############################################################################################################################################################################################
+# 7.5.2 Polar Coordinates with coord_polar()
+###############################################################################################################################################################################################
+# Using polar coordinates gives rise to pie charts and wind roses (from bar charts), and radar charts ( from line geoms)
+# Polar coordinates are often used for circular data, particularly time or direction, but the perceptual properties are not good because the angle is harder to perceive for small radii than it is for large radii
+# The following good transforms a bar chart into a pie chart or bullseye chart by changing the coordinate system
+
+base <- ggplot(mtcars, aes(factor(1), fill = factor(cyl))) + geom_bar(width = 1) + theme(legend.position = "none") +
+  scale_x_discrete(NULL, expand = c(0,0)) +
+  scale_y_continuous(NULL, expand = c(0,0))
+base # Stacked bar chart
+
+base + coord_polar(theta = "y") # Pie chart
+
+base + coord_polar() # Bullseye chart
+
+###############################################################################################################################################################################################
+# 7.5.3 Map Projections with coord_map()
+###############################################################################################################################################################################################
+# Maps are intrinsically displays of spherical data. Simply plotting raw longitudes and latitudes is misleading, so the data must be projected
+# There are two ways to do this
+
+# 1. coord_quickmap() is a quick and dirty approximation that sets the aspect ratio to ensure that 1m of latitude and 1m of longitude are the same distance in the middle of the plot. This is reasonable for smaller regions and is much faster
+
+# Creating a map of NZ
+
+nzmap <- ggplot(map_data("nz"), aes(long, lat, group = group)) + 
+  geom_polygon(fill = "white", color = "black") + 
+  xlab(NULL) + ylab(NULL)
+
+nzmap # Plotted in Cartesian coordinates
+
+nzmap + coord_quickmap() # With aspect ratio approximation
+
+# coord_map() uses the mapproj package, to do formal map projections. It takes the same arguments as mapproj::mapproject() for controlling the projection
+# It is much slower than coord_quickmap() because it munchs the data and transforms each piece
+
+world <- map_data("world")
+worldmap <- ggplot(world, aes(long, lat, group = group)) +
+  geom_path() +
+  scale_y_continuous(NULL, breaks = (-2:3) * 30, labels = NULL) + 
+  scale_x_continuous(NULL, breaks = (-4:4) * 45, labels = NULL)
+
+worldmap + coord_map()
+worldmap + coord_map("ortho")
+worldmap + coord_map("stereographic")
+
+###############################################################################################################################################################################################
+# End of Chapter 8
+###############################################################################################################################################################################################
 
 
 
